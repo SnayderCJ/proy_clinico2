@@ -1,0 +1,10 @@
+/* 
+ * Archivo CSS para reemplazar Tailwind CSS con CDN
+ * Puedes incluir este archivo en tus templates para cargar Tailwind desde CDN
+ * o agregar estilos personalizados aquí
+ */
+
+/* Importar Tailwind CSS desde CDN */
+@import url('https://cdn.tailwindcss.com');
+
+/* Aquí puedes agregar tus estilos personalizados */

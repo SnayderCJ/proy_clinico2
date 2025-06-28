@@ -1,0 +1,674 @@
+{% extends 'base.html' %}
+{% load static calendar_extras %}
+
+{% block title %}Calendario de Citas{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calendar-day {
+        min-height: 120px;
+        transition: all 0.3s ease;
+    }
+    .calendar-day:hover {
+        background-color: #f3f4f6;
+    }
+    .cita-item {
+        font-size: 0.75rem;
+        padding: 2px 4px;
+        margin: 1px 0;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .cita-item:hover {
+        transform: scale(1.02);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .estado-pendiente { background-color: #fef3c7; color: #92400e; }
+    .estado-confirmada { background-color: #d1fae5; color: #065f46; }
+    .estado-cancelada { background-color: #fee2e2; color: #991b1b; }
+    .estado-completada { background-color: #dbeafe; color: #1e40af; }
+    .estado-ausente { background-color: #f3e8ff; color: #7c2d12; }
+    
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+    .modal.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-content {
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header del Calendario -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-3xl font-bold text-gray-800">Calendario de Citas</h1>
+            <button id="btnNuevaCita" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                <i class="fas fa-plus mr-2"></i>Nueva Cita
+            </button>
+        </div>
+        
+        <!-- Navegación del mes -->
+        <div class="flex justify-between items-center">
+            <a href="?year={{ prev_year }}&month={{ prev_month }}" 
+               class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                <i class="fas fa-chevron-left mr-2"></i>Anterior
+            </a>
+            
+            <h2 class="text-2xl font-semibold text-gray-700">{{ month_name }} {{ year }}</h2>
+            
+            <a href="?year={{ next_year }}&month={{ next_month }}" 
+               class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                Siguiente<i class="fas fa-chevron-right ml-2"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Estadísticas y Leyenda -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <!-- Estadísticas -->
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <h3 class="text-lg font-semibold mb-3">Estadísticas del Mes:</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="text-center p-3 bg-gray-50 rounded-lg">
+                    <span class="block text-2xl font-bold text-gray-700" id="totalCitas">0</span>
+                    <span class="text-sm text-gray-500">Total Citas</span>
+                </div>
+                <div class="text-center p-3 bg-yellow-50 rounded-lg">
+                    <span class="block text-2xl font-bold text-yellow-600" id="citasPendientes">0</span>
+                    <span class="text-sm text-yellow-500">Pendientes</span>
+                </div>
+                <div class="text-center p-3 bg-green-50 rounded-lg">
+                    <span class="block text-2xl font-bold text-green-600" id="citasConfirmadas">0</span>
+                    <span class="text-sm text-green-500">Confirmadas</span>
+                </div>
+                <div class="text-center p-3 bg-blue-50 rounded-lg">
+                    <span class="block text-2xl font-bold text-blue-600" id="citasCompletadas">0</span>
+                    <span class="text-sm text-blue-500">Completadas</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leyenda de estados -->
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <h3 class="text-lg font-semibold mb-3">Estados de Citas:</h3>
+            <div class="flex flex-wrap gap-4">
+                <span class="estado-pendiente px-3 py-1 rounded">Pendiente</span>
+                <span class="estado-confirmada px-3 py-1 rounded">Confirmada</span>
+                <span class="estado-completada px-3 py-1 rounded">Completada</span>
+                <span class="estado-cancelada px-3 py-1 rounded">Cancelada</span>
+                <span class="estado-ausente px-3 py-1 rounded">Ausente</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendario -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <!-- Días de la semana -->
+        <div class="grid grid-cols-7 bg-gray-100">
+            {% for dia in dias_semana %}
+            <div class="p-3 text-center font-semibold text-gray-700 border-r border-gray-200">
+                {{ dia }}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Días del mes -->
+        {% for semana in month_days %}
+        <div class="grid grid-cols-7 border-b border-gray-200">
+            {% for dia in semana %}
+            <div class="calendar-day border-r border-gray-200 p-2 {% if dia == 0 %}bg-gray-50{% endif %}">
+                {% if dia != 0 %}
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-lg font-semibold text-gray-700">{{ dia }}</span>
+                        <button class="btn-agregar-cita text-blue-500 hover:text-blue-700 text-sm" 
+                                data-fecha="{{ year }}-{{ month|stringformat:'02d' }}-{{ dia|stringformat:'02d' }}">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Citas del día -->
+                    <div class="space-y-1">
+                        {% if dia in citas_por_dia %}
+                            {% for cita in citas_por_dia|lookup:dia %}
+                            <div class="cita-item estado-{{ cita.estado }}" 
+                                 data-cita-id="{{ cita.id }}"
+                                 onclick="mostrarDetalleCita({{ cita.id }})">
+                                <div class="font-semibold">{{ cita.hora_cita|time:'H:i' }}</div>
+                                <div class="truncate">{{ cita.paciente.nombre_completo }}</div>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal para Nueva Cita -->
+<div id="modalNuevaCita" class="modal">
+    <div class="modal-content">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">Nueva Cita</h3>
+            <button class="close-modal text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <form id="formNuevaCita">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Paciente</label>
+                <input type="text" id="buscarPaciente" placeholder="Buscar por nombre o cédula..." 
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <div id="listaPacientes" class="mt-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg hidden"></div>
+                <input type="hidden" id="pacienteSeleccionado">
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
+                    <input type="date" id="fechaCita" required 
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora</label>
+                    <select id="horaCita" required 
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Seleccione una hora</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Observaciones</label>
+                <textarea id="observacionesCita" rows="3" 
+                          class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Observaciones adicionales..."></textarea>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button type="button" class="close-modal bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                    Cancelar
+                </button>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                    Crear Cita
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal para Detalle/Editar Cita -->
+<div id="modalDetalleCita" class="modal">
+    <div class="modal-content">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">Detalle de Cita</h3>
+            <button class="close-modal text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div id="contenidoDetalleCita">
+            <!-- Contenido se carga dinámicamente -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Variables globales
+let pacienteSeleccionadoId = null;
+
+// Funciones de validación
+function validarFecha(fecha) {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const fechaSeleccionada = new Date(fecha);
+    fechaSeleccionada.setHours(0, 0, 0, 0);
+
+    // No permitir fechas pasadas
+    if (fechaSeleccionada < hoy) {
+        return {
+            valido: false,
+            error: 'No se pueden agendar citas en fechas pasadas'
+        };
+    }
+
+    // No permitir fechas más allá de 6 meses
+    const seisMeses = new Date();
+    seisMeses.setMonth(seisMeses.getMonth() + 6);
+    if (fechaSeleccionada > seisMeses) {
+        return {
+            valido: false,
+            error: 'No se pueden agendar citas con más de 6 meses de anticipación'
+        };
+    }
+
+    return { valido: true };
+}
+
+function validarHora(hora, fecha) {
+    const ahora = new Date();
+    const fechaHora = new Date(fecha + 'T' + hora);
+    
+    // Si es hoy, validar que la hora no haya pasado (con 1 hora de anticipación)
+    if (fecha === ahora.toISOString().split('T')[0]) {
+        const horaLimite = new Date(ahora.getTime() + (60 * 60 * 1000)); // 1 hora después
+        if (fechaHora <= horaLimite) {
+            return {
+                valido: false,
+                error: 'Debe agendar con al menos 1 hora de anticipación'
+            };
+        }
+    }
+
+    // Validar que la hora sea en intervalos de 30 minutos
+    const minutos = fechaHora.getMinutes();
+    if (minutos !== 0 && minutos !== 30) {
+        return {
+            valido: false,
+            error: 'Las citas solo se pueden agendar cada 30 minutos'
+        };
+    }
+
+    return { valido: true };
+}
+
+// Inicialización
+document.addEventListener('DOMContentLoaded', function() {
+    initializeEventListeners();
+    cargarEstadisticas();
+});
+
+function initializeEventListeners() {
+    // Modal nueva cita
+    document.getElementById('btnNuevaCita').addEventListener('click', abrirModalNuevaCita);
+    
+    // Cerrar modales
+    document.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('click', cerrarModales);
+    });
+    
+    // Cerrar modal al hacer click fuera
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                cerrarModales();
+            }
+        });
+    });
+    
+    // Botones agregar cita por día
+    document.querySelectorAll('.btn-agregar-cita').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const fecha = this.dataset.fecha;
+            abrirModalNuevaCita(fecha);
+        });
+    });
+    
+    // Buscar pacientes
+    document.getElementById('buscarPaciente').addEventListener('input', buscarPacientes);
+    
+    // Cambio de fecha para cargar horarios
+    document.getElementById('fechaCita').addEventListener('change', cargarHorariosDisponibles);
+    
+    // Submit form nueva cita
+    document.getElementById('formNuevaCita').addEventListener('submit', crearCita);
+}
+
+function abrirModalNuevaCita(fecha = null) {
+    const modal = document.getElementById('modalNuevaCita');
+    const fechaInput = document.getElementById('fechaCita');
+    
+    // Limpiar formulario
+    document.getElementById('formNuevaCita').reset();
+    document.getElementById('listaPacientes').classList.add('hidden');
+    document.getElementById('horaCita').innerHTML = '<option value="">Seleccione una hora</option>';
+    pacienteSeleccionadoId = null;
+    
+    // Establecer fecha si se proporciona
+    if (fecha) {
+        fechaInput.value = fecha;
+        cargarHorariosDisponibles();
+    } else {
+        // Fecha mínima: hoy
+        const hoy = new Date().toISOString().split('T')[0];
+        fechaInput.min = hoy;
+    }
+    
+    modal.classList.add('show');
+}
+
+function cerrarModales() {
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.classList.remove('show');
+    });
+}
+
+async function buscarPacientes() {
+    const query = document.getElementById('buscarPaciente').value;
+    const listaPacientes = document.getElementById('listaPacientes');
+    
+    if (query.length < 2) {
+        listaPacientes.classList.add('hidden');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/doctor/api/buscar-pacientes/?q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        
+        if (data.pacientes.length > 0) {
+            let html = '';
+            data.pacientes.forEach(paciente => {
+                html += `
+                    <div class="p-3 hover:bg-gray-100 cursor-pointer border-b" 
+                         onclick="seleccionarPaciente(${paciente.id}, '${paciente.nombre_completo}')">
+                        <div class="font-semibold">${paciente.nombre_completo}</div>
+                        <div class="text-sm text-gray-600">Cédula: ${paciente.cedula} | Tel: ${paciente.telefono}</div>
+                    </div>
+                `;
+            });
+            listaPacientes.innerHTML = html;
+            listaPacientes.classList.remove('hidden');
+        } else {
+            listaPacientes.innerHTML = '<div class="p-3 text-gray-500">No se encontraron pacientes</div>';
+            listaPacientes.classList.remove('hidden');
+        }
+    } catch (error) {
+        console.error('Error buscando pacientes:', error);
+    }
+}
+
+function seleccionarPaciente(id, nombre) {
+    pacienteSeleccionadoId = id;
+    document.getElementById('buscarPaciente').value = nombre;
+    document.getElementById('listaPacientes').classList.add('hidden');
+}
+
+async function cargarHorariosDisponibles() {
+    const fecha = document.getElementById('fechaCita').value;
+    const horaSelect = document.getElementById('horaCita');
+    
+    if (!fecha) return;
+    
+    try {
+        const response = await fetch(`/doctor/api/horarios-disponibles/?fecha=${fecha}`);
+        const data = await response.json();
+        
+        horaSelect.innerHTML = '<option value="">Seleccione una hora</option>';
+        
+        if (data.horarios_disponibles.length > 0) {
+            data.horarios_disponibles.forEach(horario => {
+                const option = document.createElement('option');
+                option.value = horario.hora;
+                option.textContent = horario.hora;
+                option.disabled = !horario.disponible;
+                if (!horario.disponible) {
+                    option.textContent += ' (Ocupado)';
+                    option.style.color = '#999';
+                }
+                horaSelect.appendChild(option);
+            });
+        } else {
+            horaSelect.innerHTML = '<option value="">No hay horarios disponibles</option>';
+        }
+    } catch (error) {
+        console.error('Error cargando horarios:', error);
+        horaSelect.innerHTML = '<option value="">Error cargando horarios</option>';
+    }
+}
+
+async function crearCita(e) {
+    e.preventDefault();
+    
+    if (!pacienteSeleccionadoId) {
+        alert('Por favor seleccione un paciente');
+        return;
+    }
+    
+    const fecha = document.getElementById('fechaCita').value;
+    const hora = document.getElementById('horaCita').value;
+    const observaciones = document.getElementById('observacionesCita').value;
+    
+    if (!fecha || !hora) {
+        alert('Por favor complete todos los campos requeridos');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/doctor/api/crear-cita/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                paciente_id: pacienteSeleccionadoId,
+                fecha: fecha,
+                hora: hora,
+                observaciones: observaciones
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Cita creada exitosamente');
+            cerrarModales();
+            location.reload(); // Recargar para mostrar la nueva cita
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error creando cita:', error);
+        alert('Error al crear la cita');
+    }
+}
+
+async function mostrarDetalleCita(citaId) {
+    try {
+        const response = await fetch(`/doctor/api/editar-cita/${citaId}/`);
+        const data = await response.json();
+        
+        if (data.cita) {
+            const cita = data.cita;
+            const contenido = document.getElementById('contenidoDetalleCita');
+            
+            contenido.innerHTML = `
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Paciente</label>
+                            <p class="mt-1 text-sm text-gray-900">${cita.paciente_nombre}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Estado</label>
+                            <select id="estadoCita" class="mt-1 w-full p-2 border border-gray-300 rounded-lg">
+                                {% for estado_key, estado_label in estados_cita %}
+                                <option value="{{ estado_key }}" ${cita.estado === '{{ estado_key }}' ? 'selected' : ''}>{{ estado_label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Fecha</label>
+                            <p class="mt-1 text-sm text-gray-900">${cita.fecha}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Hora</label>
+                            <p class="mt-1 text-sm text-gray-900">${cita.hora}</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Observaciones</label>
+                        <textarea id="observacionesDetalle" rows="3" 
+                                  class="mt-1 w-full p-2 border border-gray-300 rounded-lg">${cita.observaciones}</textarea>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button onclick="eliminarCita(${cita.id})" 
+                                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">
+                            Cancelar Cita
+                        </button>
+                        <button onclick="actualizarCita(${cita.id})" 
+                                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                            Actualizar
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('modalDetalleCita').classList.add('show');
+        }
+    } catch (error) {
+        console.error('Error cargando detalle de cita:', error);
+    }
+}
+
+async function actualizarCita(citaId) {
+    const estado = document.getElementById('estadoCita').value;
+    const observaciones = document.getElementById('observacionesDetalle').value;
+    
+    try {
+        const response = await fetch(`/doctor/api/editar-cita/${citaId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                estado: estado,
+                observaciones: observaciones
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Cita actualizada exitosamente');
+            cerrarModales();
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error actualizando cita:', error);
+        alert('Error al actualizar la cita');
+    }
+}
+
+async function eliminarCita(citaId) {
+    if (!confirm('¿Está seguro de que desea cancelar esta cita?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/doctor/api/eliminar-cita/${citaId}/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Cita cancelada exitosamente');
+            cerrarModales();
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error eliminando cita:', error);
+        alert('Error al cancelar la cita');
+    }
+}
+
+// Función para cargar estadísticas del calendario
+async function cargarEstadisticas() {
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const year = urlParams.get('year') || new Date().getFullYear();
+        const month = urlParams.get('month') || new Date().getMonth() + 1;
+
+        const response = await fetch(`/doctor/api/estadisticas/?year=${year}&month=${month}`);
+        const data = await response.json();
+
+        // Actualizar estadísticas en la UI
+        const totalCitasEl = document.getElementById('totalCitas');
+        const citasPendientesEl = document.getElementById('citasPendientes');
+        const citasConfirmadasEl = document.getElementById('citasConfirmadas');
+        const citasCompletadasEl = document.getElementById('citasCompletadas');
+
+        if (totalCitasEl) totalCitasEl.textContent = data.total_citas || 0;
+        if (citasPendientesEl) citasPendientesEl.textContent = data.por_estado?.pendiente || 0;
+        if (citasConfirmadasEl) citasConfirmadasEl.textContent = data.por_estado?.confirmada || 0;
+        if (citasCompletadasEl) citasCompletadasEl.textContent = data.por_estado?.completada || 0;
+
+        console.log('Estadísticas cargadas:', data);
+    } catch (error) {
+        console.error('Error cargando estadísticas:', error);
+        // Mostrar valores por defecto en caso de error
+        const elementos = ['totalCitas', 'citasPendientes', 'citasConfirmadas', 'citasCompletadas'];
+        elementos.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = '0';
+        });
+    }
+}
+
+// Función auxiliar para obtener CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+
+<!-- Template filter personalizado para lookup -->
+<script>
+// Filtro personalizado para acceder a diccionarios en templates
+document.addEventListener('DOMContentLoaded', function() {
+    // Este script maneja la funcionalidad del calendario
+});
+</script>
+{% endblock %}
