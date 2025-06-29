@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Eliminar Paciente - {{ paciente.nombre_completo }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="flex items-center mb-6">
+        <a href="{% url 'core:paciente_detail' paciente.pk %}" class="text-gray-600 hover:text-gray-900 mr-4">
+            <i class="bi bi-arrow-left text-xl"></i>
+        </a>
+        <div>
+            <h1 class="text-3xl font-bold text-red-600">Eliminar Paciente</h1>
+            <p class="text-gray-600">{{ paciente.nombre_completo }}</p>
+        </div>
+    </div>
+
+    <!-- Advertencia -->
+    <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+        <div class="flex items-start">
+            <i class="bi bi-exclamation-triangle text-red-500 text-2xl mr-4 mt-1"></i>
+            <div>
+                <h2 class="text-lg font-semibold text-red-800 mb-2">¡Atención!</h2>
+                <p class="text-red-700 mb-4">
+                    Está a punto de <strong>desactivar</strong> este paciente del sistema. 
+                    Esta acción:
+                </p>
+                <ul class="list-disc list-inside text-red-700 space-y-1">
+                    <li>Ocultará al paciente de las listas principales</li>
+                    <li>Mantendrá toda su información médica</li>
+                    <li>Conservará su historia clínica y atenciones</li>
+                    <li>Puede ser revertida por un administrador</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información del Paciente -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Información del Paciente</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="flex items-center">
+                {% if paciente.get_image %}
+                    <img src="{{ paciente.get_image }}" alt="{{ paciente.nombre_completo }}" 
+                         class="h-16 w-16 rounded-full object-cover mr-4">
+                {% else %}
+                    <div class="h-16 w-16 rounded-full bg-gray-300 flex items-center justify-center mr-4">
+                        <i class="bi bi-person text-gray-600 text-2xl"></i>
+                    </div>
+                {% endif %}
+                <div>
+                    <h4 class="text-xl font-medium text-gray-900">{{ paciente.nombre_completo }}</h4>
+                    <p class="text-gray-600">CI: {{ paciente.cedula_ecuatoriana }}</p>
+                    <p class="text-gray-600">{{ paciente.edad }} años • {{ paciente.get_sexo_display }}</p>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Teléfono</label>
+                    <p class="text-gray-900">{{ paciente.telefono }}</p>
+                </div>
+                {% if paciente.email %}
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Email</label>
+                    <p class="text-gray-900">{{ paciente.email }}</p>
+                </div>
+                {% endif %}
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Dirección</label>
+                    <p class="text-gray-900">{{ paciente.direccion }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas del Paciente -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Datos Médicos</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="text-center">
+                <div class="text-3xl font-bold text-blue-600">{{ paciente.atenciones.count }}</div>
+                <div class="text-sm text-gray-600">Atenciones Médicas</div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl font-bold text-green-600">{{ paciente.fotos.count }}</div>
+                <div class="text-sm text-gray-600">Fotos Registradas</div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl font-bold text-purple-600">
+                    {% with paciente.atenciones.first as ultima_atencion %}
+                        {% if ultima_atencion %}
+                            {{ ultima_atencion.fecha_atencion|timesince }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    {% endwith %}
+                </div>
+                <div class="text-sm text-gray-600">Última Atención</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de Confirmación -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- Checkbox de confirmación -->
+            <div class="mb-6">
+                <label class="flex items-start">
+                    <input type="checkbox" id="confirmDelete" required
+                           class="mt-1 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                    <span class="ml-3 text-gray-700">
+                        Confirmo que deseo desactivar este paciente del sistema. 
+                        Entiendo que esta acción ocultará al paciente pero mantendrá 
+                        toda su información médica.
+                    </span>
+                </label>
+            </div>
+
+            <!-- Motivo (opcional) -->
+            <div class="mb-6">
+                <label for="motivo" class="block text-sm font-medium text-gray-700 mb-2">
+                    Motivo de la desactivación (opcional)
+                </label>
+                <textarea name="motivo" id="motivo" rows="3" 
+                          placeholder="Ej: Paciente se mudó de ciudad, duplicado, etc."
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500"></textarea>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex justify-end space-x-3">
+                <a href="{% url 'core:paciente_detail' paciente.pk %}" 
+                   class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-md">
+                    <i class="bi bi-x-circle mr-2"></i>
+                    Cancelar
+                </a>
+                <button type="submit" id="deleteButton" disabled
+                        class="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-md">
+                    <i class="bi bi-trash mr-2"></i>
+                    Desactivar Paciente
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkbox = document.getElementById('confirmDelete');
+    const deleteButton = document.getElementById('deleteButton');
+    
+    checkbox.addEventListener('change', function() {
+        deleteButton.disabled = !this.checked;
+        if (this.checked) {
+            deleteButton.classList.remove('bg-gray-400', 'cursor-not-allowed');
+            deleteButton.classList.add('bg-red-600', 'hover:bg-red-700');
+        } else {
+            deleteButton.classList.add('bg-gray-400', 'cursor-not-allowed');
+            deleteButton.classList.remove('bg-red-600', 'hover:bg-red-700');
+        }
+    });
+    
+    // Confirmación adicional antes de enviar
+    deleteButton.addEventListener('click', function(e) {
+        if (!confirm('¿Está completamente seguro que desea desactivar este paciente?')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

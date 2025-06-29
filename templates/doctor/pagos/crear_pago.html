@@ -1,0 +1,439 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Crear Pago{% endblock %}
+
+{% block extra_css %}
+<style>
+    .servicio-item {
+        transition: all 0.3s ease;
+    }
+    .servicio-item:hover {
+        background-color: #f3f4f6;
+    }
+    .metodo-pago {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .metodo-pago:hover {
+        transform: scale(1.02);
+    }
+    .metodo-pago.selected {
+        border-color: #3b82f6;
+        background-color: #eff6ff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Crear Pago</h1>
+
+        <!-- Información de la atención si existe -->
+        {% if atencion %}
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <h2 class="text-lg font-semibold text-blue-800 mb-2">Información de la Atención</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-600">Paciente</p>
+                    <p class="font-medium">{{ atencion.paciente.nombre_completo }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Fecha</p>
+                    <p class="font-medium">{{ atencion.fecha_atencion|date:"d/m/Y H:i" }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Formulario de Pago -->
+        <form id="formPago" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Servicios -->
+            <div>
+                <h3 class="text-lg font-semibold mb-3">Servicios a Pagar</h3>
+                <div class="space-y-4" id="serviciosContainer">
+                    {% for servicio in servicios %}
+                    <div class="servicio-item border rounded-lg p-4">
+                        <div class="flex items-start">
+                            <input type="checkbox" name="servicios" value="{{ servicio.id }}" 
+                                   class="mt-1 servicio-checkbox"
+                                   data-precio="{{ servicio.costo_servicio }}"
+                                   data-nombre="{{ servicio.nombre_servicio }}">
+                            <div class="ml-3 flex-grow">
+                                <div class="flex justify-between">
+                                    <h4 class="font-medium">{{ servicio.nombre_servicio }}</h4>
+                                    <span class="text-green-600">${{ servicio.costo_servicio }}</span>
+                                </div>
+                                <p class="text-sm text-gray-500">{{ servicio.descripcion }}</p>
+                                
+                                <!-- Campos adicionales (inicialmente ocultos) -->
+                                <div class="hidden mt-3 space-y-3 servicio-detalles">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Cantidad</label>
+                                            <input type="number" min="1" value="1" 
+                                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Descuento (%)</label>
+                                            <input type="number" min="0" max="100" value="0" 
+                                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="rounded text-blue-600 focus:ring-blue-500">
+                                            <span class="ml-2 text-sm text-gray-700">Aplicar Seguro</span>
+                                        </label>
+                                        
+                                        <div class="hidden mt-3 space-y-3 seguro-detalles">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Valor Cubierto por Seguro</label>
+                                                <input type="number" step="0.01" min="0" 
+                                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700">Descripción del Seguro</label>
+                                                <input type="text" placeholder="Ej: Saludsa Plan Premium" 
+                                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Resumen del Pago -->
+            <div class="border-t pt-4">
+                <h3 class="text-lg font-semibold mb-3">Resumen del Pago</h3>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="space-y-2" id="resumenServicios">
+                        <!-- Los servicios seleccionados se mostrarán aquí -->
+                    </div>
+                    <div class="border-t border-gray-200 mt-4 pt-4">
+                        <div class="flex justify-between font-semibold">
+                            <span>Total a Pagar:</span>
+                            <span class="text-green-600" id="montoTotal">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Método de Pago -->
+            <div>
+                <h3 class="text-lg font-semibold mb-3">Método de Pago</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {% for value, label in metodos_pago %}
+                    <div class="metodo-pago border rounded-lg p-4 text-center" data-metodo="{{ value }}">
+                        <i class="fas fa-{% if value == 'paypal' %}paypal text-blue-500{% elif value == 'efectivo' %}money-bill-wave text-green-500{% else %}credit-card text-purple-500{% endif %} text-2xl mb-2"></i>
+                        <div class="font-medium">{{ label }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Información Adicional -->
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Nombre del Pagador</label>
+                    <input type="text" id="nombrePagador" name="nombre_pagador" 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Observaciones</label>
+                    <textarea id="observaciones" name="observaciones" rows="3" 
+                              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="flex justify-end space-x-4">
+                <button type="button" onclick="history.back()" 
+                        class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Cancelar
+                </button>
+                <button type="submit" id="btnPagar" 
+                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Continuar con el Pago
+                </button>
+            </div>
+
+            <!-- PayPal Buttons Container -->
+            <div id="paypal-button-container" class="hidden mt-4"></div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- PayPal SDK -->
+<script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD"></script>
+
+<script>
+let pagoCreado = null;
+let metodoPagoSeleccionado = null;
+
+// Inicialización
+document.addEventListener('DOMContentLoaded', function() {
+    initializeEventListeners();
+    actualizarResumen();
+});
+
+function initializeEventListeners() {
+    // Servicios checkboxes
+    document.querySelectorAll('.servicio-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const detalles = this.closest('.servicio-item').querySelector('.servicio-detalles');
+            if (this.checked) {
+                detalles.classList.remove('hidden');
+            } else {
+                detalles.classList.add('hidden');
+            }
+            actualizarResumen();
+        });
+    });
+
+    // Campos de cantidad y descuento
+    document.querySelectorAll('.servicio-detalles input[type="number"]').forEach(input => {
+        input.addEventListener('change', actualizarResumen);
+    });
+
+    // Checkbox de seguro
+    document.querySelectorAll('.servicio-detalles input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const detallesSeguro = this.closest('div').querySelector('.seguro-detalles');
+            if (this.checked) {
+                detallesSeguro.classList.remove('hidden');
+            } else {
+                detallesSeguro.classList.add('hidden');
+            }
+            actualizarResumen();
+        });
+    });
+
+    // Métodos de pago
+    document.querySelectorAll('.metodo-pago').forEach(metodo => {
+        metodo.addEventListener('click', function() {
+            document.querySelectorAll('.metodo-pago').forEach(m => m.classList.remove('selected'));
+            this.classList.add('selected');
+            metodoPagoSeleccionado = this.dataset.metodo;
+            
+            // Mostrar/ocultar botones de PayPal
+            const paypalContainer = document.getElementById('paypal-button-container');
+            if (metodoPagoSeleccionado === 'paypal') {
+                paypalContainer.classList.remove('hidden');
+                document.getElementById('btnPagar').classList.add('hidden');
+            } else {
+                paypalContainer.classList.add('hidden');
+                document.getElementById('btnPagar').classList.remove('hidden');
+            }
+        });
+    });
+
+    // Formulario de pago
+    document.getElementById('formPago').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (!metodoPagoSeleccionado) {
+            alert('Por favor seleccione un método de pago');
+            return;
+        }
+        
+        if (metodoPagoSeleccionado !== 'paypal') {
+            await crearPago();
+        }
+    });
+}
+
+function actualizarResumen() {
+    const resumenContainer = document.getElementById('resumenServicios');
+    const serviciosSeleccionados = [];
+    let montoTotal = 0;
+    
+    document.querySelectorAll('.servicio-checkbox:checked').forEach(checkbox => {
+        const servicioItem = checkbox.closest('.servicio-item');
+        const detalles = servicioItem.querySelector('.servicio-detalles');
+        const nombre = checkbox.dataset.nombre;
+        const precioBase = parseFloat(checkbox.dataset.precio);
+        
+        // Obtener cantidad y descuento
+        const cantidad = parseInt(detalles.querySelector('input[type="number"]').value) || 1;
+        const descuento = parseFloat(detalles.querySelectorAll('input[type="number"]')[1].value) || 0;
+        
+        // Calcular precio con descuento
+        const precioConDescuento = precioBase * (1 - descuento/100);
+        const subtotal = precioConDescuento * cantidad;
+        
+        serviciosSeleccionados.push({
+            nombre: nombre,
+            cantidad: cantidad,
+            precio_unitario: precioBase,
+            descuento: descuento,
+            subtotal: subtotal
+        });
+        
+        montoTotal += subtotal;
+    });
+    
+    // Actualizar resumen visual
+    resumenContainer.innerHTML = serviciosSeleccionados.map(servicio => `
+        <div class="flex justify-between text-sm">
+            <span>${servicio.cantidad}x ${servicio.nombre}</span>
+            <span>$${servicio.subtotal.toFixed(2)}</span>
+        </div>
+    `).join('');
+    
+    document.getElementById('montoTotal').textContent = `$${montoTotal.toFixed(2)}`;
+    
+    return {
+        servicios: serviciosSeleccionados,
+        total: montoTotal
+    };
+}
+
+async function crearPago() {
+    const resumen = actualizarResumen();
+    if (resumen.servicios.length === 0) {
+        alert('Por favor seleccione al menos un servicio');
+        return;
+    }
+    
+    const data = {
+        atencion_id: '{{ atencion.id }}' || null,
+        metodo_pago: metodoPagoSeleccionado,
+        servicios: resumen.servicios.map(servicio => ({
+            servicio_id: servicio.id,
+            cantidad: servicio.cantidad,
+            descuento: servicio.descuento
+        })),
+        nombre_pagador: document.getElementById('nombrePagador').value,
+        observaciones: document.getElementById('observaciones').value
+    };
+    
+    try {
+        const response = await fetch('/doctor/api/crear-pago/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            pagoCreado = result;
+            alert('Pago creado exitosamente');
+            if (metodoPagoSeleccionado === 'efectivo') {
+                window.location.href = `/doctor/pagos/${result.pago_id}/`;
+            }
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error creando pago:', error);
+        alert('Error al crear el pago');
+    }
+}
+
+// Configuración de PayPal
+paypal.Buttons({
+    createOrder: async function(data, actions) {
+        // Primero crear el pago en nuestro sistema
+        await crearPago();
+        if (!pagoCreado) {
+            throw new Error('Error creando el pago');
+        }
+        
+        const resumen = actualizarResumen();
+        
+        return actions.order.create({
+            purchase_units: [{
+                amount: {
+                    value: resumen.total.toFixed(2)
+                },
+                description: 'Servicios Médicos'
+            }]
+        });
+    },
+    onApprove: async function(data, actions) {
+        const order = await actions.order.capture();
+        
+        // Procesar el pago en nuestro sistema
+        try {
+            const response = await fetch('/doctor/api/procesar-pago-paypal/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    pago_id: pagoCreado.pago_id,
+                    paypal_order_id: order.id,
+                    paypal_payer_id: order.payer.payer_id
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('Pago procesado exitosamente');
+                window.location.href = `/doctor/pagos/${pagoCreado.pago_id}/`;
+            } else {
+                alert('Error procesando el pago: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error procesando pago:', error);
+            alert('Error al procesar el pago');
+        }
+    },
+    onCancel: async function(data) {
+        if (pagoCreado) {
+            try {
+                await fetch('/doctor/api/cancelar-pago-paypal/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        pago_id: pagoCreado.pago_id
+                    })
+                });
+            } catch (error) {
+                console.error('Error cancelando pago:', error);
+            }
+        }
+        alert('Pago cancelado');
+    },
+    onError: function(err) {
+        console.error('Error PayPal:', err);
+        alert('Error procesando el pago con PayPal');
+    }
+}).render('#paypal-button-container');
+
+// Función auxiliar para obtener CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

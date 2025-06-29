@@ -1,0 +1,410 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ paciente.nombre_completo }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center">
+            <a href="{% url 'core:paciente_list' %}" class="text-gray-600 hover:text-gray-900 mr-4">
+                <i class="bi bi-arrow-left text-xl"></i>
+            </a>
+            <div class="flex items-center">
+                {% if paciente.get_image %}
+                    <img src="{{ paciente.get_image }}" alt="{{ paciente.nombre_completo }}" 
+                         class="h-16 w-16 rounded-full object-cover mr-4">
+                {% else %}
+                    <div class="h-16 w-16 rounded-full bg-gray-300 flex items-center justify-center mr-4">
+                        <i class="bi bi-person text-gray-600 text-2xl"></i>
+                    </div>
+                {% endif %}
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">{{ paciente.nombre_completo }}</h1>
+                    <p class="text-gray-600">CI: {{ paciente.cedula_ecuatoriana }} • {{ edad }} años</p>
+                </div>
+            </div>
+        </div>
+        <div class="flex space-x-2">
+            <a href="{% url 'core:paciente_update' paciente.pk %}" 
+               class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+                <i class="bi bi-pencil mr-2"></i>
+                Editar
+            </a>
+            <a href="{% url 'doctor:calendario_citas' %}?paciente={{ paciente.pk }}" 
+               class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                <i class="bi bi-calendar-plus mr-2"></i>
+                Agendar Cita
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Información Principal -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Datos Personales -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Información Personal</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Nombres</label>
+                        <p class="text-gray-900">{{ paciente.nombres }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Apellidos</label>
+                        <p class="text-gray-900">{{ paciente.apellidos }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Cédula</label>
+                        <p class="text-gray-900">{{ paciente.cedula_ecuatoriana }}</p>
+                    </div>
+                    {% if paciente.dni %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">DNI Internacional</label>
+                        <p class="text-gray-900">{{ paciente.dni }}</p>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Fecha de Nacimiento</label>
+                        <p class="text-gray-900">{{ paciente.fecha_nacimiento|date:"d/m/Y" }} ({{ edad }} años)</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Sexo</label>
+                        <p class="text-gray-900">{{ paciente.get_sexo_display }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Estado Civil</label>
+                        <p class="text-gray-900">{{ paciente.get_estado_civil_display }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Tipo de Sangre</label>
+                        <p class="text-gray-900">
+                            {% if paciente.tipo_sangre %}
+                                <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm">
+                                    {{ paciente.tipo_sangre.tipo }}
+                                </span>
+                            {% else %}
+                                <span class="text-gray-500">No especificado</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información de Contacto -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Información de Contacto</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Teléfono</label>
+                        <p class="text-gray-900">
+                            <a href="tel:{{ paciente.telefono }}" class="text-blue-600 hover:text-blue-800">
+                                {{ paciente.telefono }}
+                            </a>
+                        </p>
+                    </div>
+                    {% if paciente.email %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Email</label>
+                        <p class="text-gray-900">
+                            <a href="mailto:{{ paciente.email }}" class="text-blue-600 hover:text-blue-800">
+                                {{ paciente.email }}
+                            </a>
+                        </p>
+                    </div>
+                    {% endif %}
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-500">Dirección</label>
+                        <p class="text-gray-900">{{ paciente.direccion }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historia Clínica Resumida -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900">Historia Clínica</h2>
+                    <a href="{% url 'core:paciente_historia' paciente.pk %}" 
+                       class="text-blue-600 hover:text-blue-800 text-sm">
+                        <i class="bi bi-pencil mr-1"></i>
+                        Editar Historia
+                    </a>
+                </div>
+                <div class="space-y-3">
+                    {% if paciente.alergias %}
+                    <div>
+                        <label class="block text-sm font-medium text-red-600">Alergias</label>
+                        <p class="text-gray-900 bg-red-50 p-2 rounded">{{ paciente.alergias }}</p>
+                    </div>
+                    {% endif %}
+                    {% if paciente.medicamentos_actuales %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Medicamentos Actuales</label>
+                        <p class="text-gray-900">{{ paciente.medicamentos_actuales }}</p>
+                    </div>
+                    {% endif %}
+                    {% if paciente.antecedentes_personales %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Antecedentes Personales</label>
+                        <p class="text-gray-900">{{ paciente.antecedentes_personales|truncatewords:20 }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Atenciones Recientes -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900">Atenciones Recientes</h2>
+                    <a href="{% url 'doctor:atencion_create' %}?paciente={{ paciente.pk }}" 
+                       class="text-blue-600 hover:text-blue-800 text-sm">
+                        <i class="bi bi-plus-circle mr-1"></i>
+                        Nueva Atención
+                    </a>
+                </div>
+                {% if atenciones_recientes %}
+                    <div class="space-y-3">
+                        {% for atencion in atenciones_recientes %}
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h4 class="font-medium text-gray-900">{{ atencion.fecha_atencion|date:"d/m/Y" }}</h4>
+                                    <p class="text-sm text-gray-600">{{ atencion.motivo_consulta|truncatewords:10 }}</p>
+                                </div>
+                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
+                                    {% if atencion.es_control %}Control{% else %}Consulta{% endif %}
+                                </span>
+                            </div>
+                            {% if atencion.diagnostico.exists %}
+                            <div class="text-sm text-gray-600">
+                                <strong>Diagnósticos:</strong>
+                                {% for diagnostico in atencion.diagnostico.all %}
+                                    {{ diagnostico.descripcion }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if total_atenciones > 5 %}
+                    <div class="text-center mt-4">
+                        <a href="{% url 'doctor:atencion_list' %}?paciente={{ paciente.pk }}" 
+                           class="text-blue-600 hover:text-blue-800 text-sm">
+                            Ver todas las atenciones ({{ total_atenciones }})
+                        </a>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-8">
+                        <i class="bi bi-file-medical text-gray-400 text-4xl mb-2"></i>
+                        <p class="text-gray-500">No hay atenciones registradas</p>
+                        <a href="{% url 'doctor:atencion_create' %}?paciente={{ paciente.pk }}" 
+                           class="text-blue-600 hover:text-blue-800 text-sm">
+                            Registrar primera atención
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Panel Lateral -->
+        <div class="space-y-6">
+            <!-- Estadísticas -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Estadísticas</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Total Consultas</span>
+                        <span class="font-medium">{{ total_atenciones }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Total Citas</span>
+                        <span class="font-medium">{{ total_citas }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Total Pagos</span>
+                        <span class="font-medium">${{ total_pagado|floatformat:2 }}</span>
+                    </div>
+                    {% if imc %}
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">IMC Promedio</span>
+                        <span class="font-medium">{{ imc }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Paciente desde</span>
+                        <span class="font-medium">{{ paciente.fecha_nacimiento|date:"Y" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Próximas Citas -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Próximas Citas</h3>
+                    <a href="{% url 'doctor:calendario_citas' %}?paciente={{ paciente.pk }}" 
+                       class="text-blue-600 hover:text-blue-800 text-sm">
+                        Ver calendario
+                    </a>
+                </div>
+                {% if proximas_citas %}
+                    <div class="space-y-3">
+                        {% for cita in proximas_citas %}
+                        <div class="border border-gray-200 rounded-lg p-3">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-medium text-gray-900">{{ cita.fecha|date:"d/m/Y" }}</p>
+                                    <p class="text-sm text-gray-600">{{ cita.hora_cita|time:"H:i" }}</p>
+                                    {% if cita.observaciones %}
+                                        <p class="text-xs text-gray-500 mt-1">{{ cita.observaciones|truncatewords:8 }}</p>
+                                    {% endif %}
+                                </div>
+                                <span class="bg-{% if cita.estado == 'pendiente' %}yellow{% elif cita.estado == 'confirmada' %}green{% else %}blue{% endif %}-100 text-{% if cita.estado == 'pendiente' %}yellow{% elif cita.estado == 'confirmada' %}green{% else %}blue{% endif %}-800 text-xs px-2 py-1 rounded-full">
+                                    {{ cita.get_estado_display }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-calendar text-gray-400 text-2xl mb-2"></i>
+                        <p class="text-gray-500 text-sm">No hay citas programadas</p>
+                        <a href="{% url 'doctor:calendario_citas' %}?paciente={{ paciente.pk }}" 
+                           class="text-blue-600 hover:text-blue-800 text-sm">
+                            Agendar cita
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Pagos Recientes -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Pagos Recientes</h3>
+                    <a href="{% url 'doctor:listar_pagos' %}?paciente={{ paciente.pk }}" 
+                       class="text-blue-600 hover:text-blue-800 text-sm">
+                        Ver todos
+                    </a>
+                </div>
+                {% if pagos_recientes %}
+                    <div class="space-y-3">
+                        {% for pago in pagos_recientes %}
+                        <div class="border border-gray-200 rounded-lg p-3">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-medium text-gray-900">${{ pago.monto_total|floatformat:2 }}</p>
+                                    <p class="text-sm text-gray-600">{{ pago.fecha_creacion|date:"d/m/Y" }}</p>
+                                    <p class="text-xs text-gray-500">{{ pago.get_metodo_pago_display }}</p>
+                                </div>
+                                <span class="bg-{% if pago.estado == 'pagado' %}green{% elif pago.estado == 'pendiente' %}yellow{% else %}red{% endif %}-100 text-{% if pago.estado == 'pagado' %}green{% elif pago.estado == 'pendiente' %}yellow{% else %}red{% endif %}-800 text-xs px-2 py-1 rounded-full">
+                                    {{ pago.get_estado_display }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-credit-card text-gray-400 text-2xl mb-2"></i>
+                        <p class="text-gray-500 text-sm">No hay pagos registrados</p>
+                        <a href="{% url 'doctor:crear_pago' %}?paciente={{ paciente.pk }}" 
+                           class="text-blue-600 hover:text-blue-800 text-sm">
+                            Procesar pago
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Fotos Recientes -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Fotos</h3>
+                    <a href="{% url 'core:paciente_fotos' paciente.pk %}" 
+                       class="text-blue-600 hover:text-blue-800 text-sm">
+                        Ver todas
+                    </a>
+                </div>
+                {% if fotos %}
+                    <div class="grid grid-cols-2 gap-2">
+                        {% for foto in fotos %}
+                        <img src="{{ foto.imagen.url }}" alt="{{ foto.descripcion }}" 
+                             class="w-full h-20 object-cover rounded-lg cursor-pointer hover:opacity-75"
+                             onclick="openImageModal('{{ foto.imagen.url }}', '{{ foto.descripcion }}')">
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-camera text-gray-400 text-2xl mb-2"></i>
+                        <p class="text-gray-500 text-sm">No hay fotos</p>
+                        <a href="{% url 'core:paciente_fotos' paciente.pk %}" 
+                           class="text-blue-600 hover:text-blue-800 text-sm">
+                            Agregar fotos
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Acciones Rápidas -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Acciones Rápidas</h3>
+                <div class="space-y-2">
+                    <a href="{% url 'doctor:calendario_citas' %}?paciente={{ paciente.pk }}" 
+                       class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-center block">
+                        <i class="bi bi-calendar-plus mr-2"></i>
+                        Agendar Cita
+                    </a>
+                    <a href="{% url 'doctor:atencion_create' %}?paciente={{ paciente.pk }}" 
+                       class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-center block">
+                        <i class="bi bi-file-medical mr-2"></i>
+                        Nueva Atención
+                    </a>
+                    <a href="{% url 'core:paciente_historia' paciente.pk %}" 
+                       class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-center block">
+                        <i class="bi bi-clipboard-data mr-2"></i>
+                        Historia Clínica
+                    </a>
+                    <a href="{% url 'doctor:crear_pago' %}?paciente={{ paciente.pk }}" 
+                       class="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-center block">
+                        <i class="bi bi-credit-card mr-2"></i>
+                        Procesar Pago
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para ver imágenes -->
+<div id="imageModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-4 max-w-2xl max-h-full overflow-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h3 id="imageTitle" class="text-lg font-semibold"></h3>
+            <button onclick="closeImageModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <img id="modalImage" src="" alt="" class="max-w-full h-auto">
+    </div>
+</div>
+
+<script>
+function openImageModal(src, title) {
+    document.getElementById('modalImage').src = src;
+    document.getElementById('imageTitle').textContent = title || 'Imagen del paciente';
+    document.getElementById('imageModal').classList.remove('hidden');
+}
+
+function closeImageModal() {
+    document.getElementById('imageModal').classList.add('hidden');
+}
+
+// Cerrar modal al hacer clic fuera de la imagen
+document.getElementById('imageModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeImageModal();
+    }
+});
+</script>
+{% endblock %}

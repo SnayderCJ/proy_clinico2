@@ -1,0 +1,52 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>{% block title %}SaludTotal{% endblock %}</title>
+  </head>
+  <body
+    class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100"
+  >
+    <!-- Simple Navigation -->
+    <nav class="bg-white shadow-lg">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <h1 class="text-xl font-bold text-blue-600">SaludTotal</h1>
+          </div>
+          <div class="flex items-center space-x-4">
+            {% if user.is_authenticated %}
+            <span class="text-gray-700"
+              >Hola, {{ user.get_full_name|default:user.username }}</span
+            >
+            <a
+              href="{% url 'security:signout' %}"
+              class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+            >
+              Cerrar Sesión
+            </a>
+            {% else %}
+            <a
+              href="{% url 'security:signin' %}"
+              class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
+              Iniciar Sesión
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

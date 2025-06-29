@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lista de Pagos{% endblock %}
+
+{% block extra_css %}
+<style>
+    .estado-pendiente { background-color: #fef3c7; color: #92400e; }
+    .estado-pagado { background-color: #d1fae5; color: #065f46; }
+    .estado-cancelado { background-color: #fee2e2; color: #991b1b; }
+    .estado-fallido { background-color: #fde68a; color: #92400e; }
+    
+    .metodo-efectivo { background-color: #d1fae5; color: #065f46; }
+    .metodo-paypal { background-color: #dbeafe; color: #1e40af; }
+    .metodo-tarjeta { background-color: #f3e8ff; color: #7c2d12; }
+    .metodo-transferencia { background-color: #fef3c7; color: #92400e; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-3xl font-bold text-gray-800">Lista de Pagos</h1>
+            <a href="{% url 'doctor:crear_pago' %}" 
+               class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                <i class="fas fa-plus mr-2"></i>Nuevo Pago
+            </a>
+        </div>
+        
+        <!-- Filtros -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                <select id="filtroEstado" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">Todos los estados</option>
+                    {% for value, label in estados %}
+                    <option value="{{ value }}" {% if request.GET.estado == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Método de Pago</label>
+                <select id="filtroMetodo" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">Todos los métodos</option>
+                    {% for value, label in metodos %}
+                    <option value="{{ value }}" {% if request.GET.metodo == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button onclick="aplicarFiltros()" 
+                        class="w-full bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                    <i class="fas fa-filter mr-2"></i>Filtrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas Rápidas -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <div class="flex items-center">
+                <div class="p-3 bg-blue-100 rounded-full">
+                    <i class="fas fa-dollar-sign text-blue-600"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm text-gray-600">Total Pagos</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ pagos.count }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <div class="flex items-center">
+                <div class="p-3 bg-green-100 rounded-full">
+                    <i class="fas fa-check-circle text-green-600"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm text-gray-600">Pagados</p>
+                    <p class="text-2xl font-bold text-green-600">
+                        {{ pagos|length|add:0 }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <div class="flex items-center">
+                <div class="p-3 bg-yellow-100 rounded-full">
+                    <i class="fas fa-clock text-yellow-600"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm text-gray-600">Pendientes</p>
+                    <p class="text-2xl font-bold text-yellow-600">
+                        {{ pagos|length|add:0 }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <div class="flex items-center">
+                <div class="p-3 bg-purple-100 rounded-full">
+                    <i class="fab fa-paypal text-purple-600"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm text-gray-600">PayPal</p>
+                    <p class="text-2xl font-bold text-purple-600">
+                        {{ pagos|length|add:0 }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Pagos -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            ID / Fecha
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Paciente / Pagador
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Método
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Monto
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Estado
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Acciones
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for pago in pagos %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">#{{ pago.id }}</div>
+                            <div class="text-sm text-gray-500">{{ pago.fecha_creacion|date:"d/m/Y H:i" }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if pago.atencion %}
+                            <div class="text-sm font-medium text-gray-900">{{ pago.atencion.paciente.nombre_completo }}</div>
+                            <div class="text-sm text-gray-500">Atención Médica</div>
+                            {% else %}
+                            <div class="text-sm font-medium text-gray-900">{{ pago.nombre_pagador|default:"Sin especificar" }}</div>
+                            <div class="text-sm text-gray-500">Pago directo</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium metodo-{{ pago.metodo_pago }}">
+                                <i class="fas fa-{% if pago.metodo_pago == 'paypal' %}paypal{% elif pago.metodo_pago == 'efectivo' %}money-bill-wave{% elif pago.metodo_pago == 'tarjeta' %}credit-card{% else %}exchange-alt{% endif %} mr-1"></i>
+                                {{ pago.get_metodo_pago_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">${{ pago.monto_total }}</div>
+                            {% if pago.fecha_pago %}
+                            <div class="text-sm text-gray-500">Pagado: {{ pago.fecha_pago|date:"d/m/Y" }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium estado-{{ pago.estado }}">
+                                <i class="fas fa-{% if pago.estado == 'pagado' %}check-circle{% elif pago.estado == 'pendiente' %}clock{% elif pago.estado == 'cancelado' %}times-circle{% else %}exclamation-triangle{% endif %} mr-1"></i>
+                                {{ pago.get_estado_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'doctor:detalle_pago' pago.id %}" 
+                                   class="text-blue-600 hover:text-blue-900">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if pago.estado == 'pendiente' %}
+                                <button onclick="procesarPago({{ pago.id }})" 
+                                        class="text-green-600 hover:text-green-900">
+                                    <i class="fas fa-credit-card"></i>
+                                </button>
+                                {% endif %}
+                                {% if pago.referencia_externa %}
+                                <button onclick="verReferencia('{{ pago.referencia_externa }}')" 
+                                        class="text-purple-600 hover:text-purple-900">
+                                    <i class="fab fa-paypal"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                            No hay pagos registrados
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Paginación (si es necesaria) -->
+    {% if pagos.has_other_pages %}
+    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-6 rounded-lg shadow-md">
+        <div class="flex-1 flex justify-between sm:hidden">
+            {% if pagos.has_previous %}
+            <a href="?page={{ pagos.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Anterior
+            </a>
+            {% endif %}
+            {% if pagos.has_next %}
+            <a href="?page={{ pagos.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Siguiente
+            </a>
+            {% endif %}
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-gray-700">
+                    Mostrando página {{ pagos.number }} de {{ pagos.paginator.num_pages }}
+                </p>
+            </div>
+            <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                    {% for num in pagos.paginator.page_range %}
+                    {% if pagos.number == num %}
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
+                        {{ num }}
+                    </span>
+                    {% else %}
+                    <a href="?page={{ num }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        {{ num }}
+                    </a>
+                    {% endif %}
+                    {% endfor %}
+                </nav>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function aplicarFiltros() {
+    const estado = document.getElementById('filtroEstado').value;
+    const metodo = document.getElementById('filtroMetodo').value;
+    
+    const params = new URLSearchParams();
+    if (estado) params.append('estado', estado);
+    if (metodo) params.append('metodo', metodo);
+    
+    window.location.href = '?' + params.toString();
+}
+
+function procesarPago(pagoId) {
+    if (confirm('¿Desea marcar este pago como procesado?')) {
+        // Aquí puedes agregar la lógica para procesar el pago
+        alert('Funcionalidad de procesamiento de pago pendiente de implementar');
+    }
+}
+
+function verReferencia(referencia) {
+    alert('Referencia externa: ' + referencia);
+}
+
+// Actualizar estadísticas en tiempo real
+document.addEventListener('DOMContentLoaded', function() {
+    // Aquí puedes agregar lógica para actualizar las estadísticas
+});
+</script>
+{% endblock %}

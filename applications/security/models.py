@@ -94,6 +94,58 @@ class GroupModulePermission(models.Model):
         ]
 
 """
+Modelo AuditUser: Registra las acciones realizadas por los usuarios en el sistema.
+Cada registro incluye el usuario, la tabla afectada, el ID del registro, la acción realizada,
+la fecha y hora, y la dirección IP desde donde se realizó la acción.
+
+Ejemplos:
+1. Usuario admin modificó el registro 123 de la tabla Pacientes el 2024-01-15
+2. Usuario jperez eliminó el registro 456 de la tabla Pagos el 2024-01-16
+"""
+class AuditUser(models.Model):
+    usuario = models.ForeignKey(
+        'security.User',
+        on_delete=models.PROTECT,
+        verbose_name="Usuario",
+        help_text="Usuario que realizó la acción"
+    )
+    tabla = models.CharField(
+        max_length=100,
+        verbose_name="Tabla",
+        help_text="Nombre de la tabla afectada"
+    )
+    registroid = models.IntegerField(
+        verbose_name="ID del Registro",
+        help_text="ID del registro afectado"
+    )
+    accion = models.CharField(
+        max_length=50,
+        verbose_name="Acción",
+        help_text="Tipo de acción realizada (ej: ADICION, MODIFICACION, ELIMINACION)"
+    )
+    fecha = models.DateField(
+        verbose_name="Fecha",
+        help_text="Fecha en que se realizó la acción"
+    )
+    hora = models.TimeField(
+        verbose_name="Hora",
+        help_text="Hora en que se realizó la acción"
+    )
+    estacion = models.CharField(
+        max_length=100,
+        verbose_name="Estación",
+        help_text="Dirección IP desde donde se realizó la acción"
+    )
+
+    def __str__(self):
+        return f"{self.usuario} - {self.accion} en {self.tabla} #{self.registroid}"
+
+    class Meta:
+        verbose_name = "Auditoría de Usuario"
+        verbose_name_plural = "Auditorías de Usuarios"
+        ordering = ['-fecha', '-hora']
+
+"""
 Modelo User: Extiende el usuario estándar de Django para añadir campos personalizados.
 Utiliza email como identificador principal para login en lugar del username.
 
@@ -177,52 +229,3 @@ class User(AbstractUser, PermissionsMixin):
             pass
         
         return None
-
-
-"""
-Modelo AuditUser: Registra las acciones realizadas por los usuarios en el sistema.
-Almacena información sobre qué usuario realizó qué acción, en qué tabla/registro,
-cuándo lo hizo y desde qué dirección IP.
-"""
-class AuditUser(models.Model):
-    usuario = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE,
-        verbose_name="Usuario",
-        help_text="Usuario que realizó la acción"
-    )
-    tabla = models.CharField(
-        max_length=100,
-        verbose_name="Tabla",
-        help_text="Nombre de la tabla afectada"
-    )
-    registroid = models.IntegerField(
-        verbose_name="ID del Registro",
-        help_text="Identificador del registro afectado"
-    )
-    accion = models.CharField(
-        max_length=50,
-        verbose_name="Acción",
-        help_text="Tipo de acción realizada (crear, modificar, eliminar, etc.)"
-    )
-    fecha = models.DateField(
-        verbose_name="Fecha",
-        help_text="Fecha en que se realizó la acción"
-    )
-    hora = models.TimeField(
-        verbose_name="Hora",
-        help_text="Hora en que se realizó la acción"
-    )
-    estacion = models.CharField(
-        max_length=100,
-        verbose_name="Estación",
-        help_text="Dirección IP desde donde se realizó la acción"
-    )
-
-    def __str__(self):
-        return f"{self.usuario} - {self.accion} en {self.tabla} #{self.registroid}"
-
-    class Meta:
-        verbose_name = "Auditoría de Usuario"
-        verbose_name_plural = "Auditorías de Usuarios"
-        ordering = ['-fecha', '-hora']

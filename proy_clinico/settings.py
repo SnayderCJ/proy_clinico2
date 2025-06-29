@@ -153,3 +153,8 @@ LOGIN_URL = '/auth/signin/'
 # SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Configuración de PayPal (en producción esto debería estar en variables de entorno)
+PAYPAL_CLIENT_ID = os.getenv('PAYPAL_CLIENT_ID', 'AeA1QIZXiflr1_-7Lft_F_FkPBNrSB7hxQn-CDbpqVhJn8T-G4dWkdU_-HQXPxVb-HQn-CDbpqVhJn8T')  # Cliente ID de prueba
+PAYPAL_CLIENT_SECRET = os.getenv('PAYPAL_CLIENT_SECRET', 'EL-Vh9whC7Va')
+PAYPAL_MODE = os.getenv('PAYPAL_MODE', 'sandbox')  # "sandbox" para pruebas, "live" para producción

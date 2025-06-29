@@ -5,12 +5,7 @@ from applications.doctor.utils.cita_medica import EstadoCitaChoices
 from applications.doctor.utils.doctor import DiaSemanaChoices
 from applications.doctor.utils.pago import MetodoPagoChoices, EstadoPagoChoices
 
-"""
-    Modelo Patient: Representa los pacientes registrados en el sistema médico.
-"""
-
 class HorarioAtencion(models.Model):
-
     # Día de la semana (ej: lunes, martes...)
     dia_semana = models.CharField(
         max_length=10,
@@ -192,7 +187,6 @@ class Atencion(models.Model):
     def get_diagnosticos(self):
         return " - ".join([d.descripcion for d in self.diagnostico.all().order_by('descripcion')])
 
-
 class DetalleAtencion(models.Model):
     atencion = models.ForeignKey(
         Atencion,
@@ -237,33 +231,24 @@ class DetalleAtencion(models.Model):
     def __str__(self):
         return f"{self.medicamento} para {self.atencion.paciente}"
 
-# Modelo que representa un servicio adicional ofrecido durante una atención médica.
-# Puede incluir exámenes, procedimientos, o cualquier otro servicio.
 class ServiciosAdicionales(models.Model):
-    # Nombre del servicio (ej. Radiografía, Laboratorio, Procedimiento menor, etc.)
     nombre_servicio = models.CharField(
         max_length=255,
         verbose_name="Nombre del Servicio",
         help_text="Ejemplo: Radiografía, Laboratorio clínico, Procedimiento menor."
     )
-
-    # Costo unitario del servicio adicional
     costo_servicio = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         verbose_name="Costo del Servicio",
         help_text="Costo unitario del servicio en dólares. Ejemplo: 25.00"
     )
-
-    # Descripción opcional del servicio adicional
     descripcion = models.TextField(
         null=True,
         blank=True,
         verbose_name="Descripción del Servicio",
         help_text="Descripción opcional del servicio. Ejemplo: Examen de sangre de rutina."
     )
-
-    # Indica si el servicio está activo o no
     activo = models.BooleanField(
         default=True,
         verbose_name="Activo",
@@ -278,49 +263,74 @@ class ServiciosAdicionales(models.Model):
     def __str__(self):
         return self.nombre_servicio
 
-# Pago de atencion y servicios varios
 class Pago(models.Model):
-    # Relación con la atención médica (opcional para servicios independientes)
-    atencion = models.ForeignKey(Atencion, on_delete=models.PROTECT,
-                                 verbose_name="Atención", related_name="pagos",
-                                 null=True, blank=True)
-
-    # Información del pago
-    metodo_pago = models.CharField(max_length=20, choices=MetodoPagoChoices.choices,
-                                   verbose_name="Método de Pago")
-    monto_total = models.DecimalField(max_digits=10, decimal_places=2,
-                                      verbose_name="Monto Total")
-    estado = models.CharField(max_length=20, choices=EstadoPagoChoices.choices,
-                              default=EstadoPagoChoices.PENDIENTE, verbose_name="Estado")
-
-    # Fechas
-    fecha_pago = models.DateTimeField(verbose_name="Fecha de Pago", null=True, blank=True)
-    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
-
-    # Información del pagador (opcional)
-    nombre_pagador = models.CharField(max_length=100, verbose_name="Nombre del Pagador",
-                                      blank=True, null=True)
-
-    # Para pagos digitales
-    referencia_externa = models.CharField(max_length=100, verbose_name="Referencia Externa",
-                                          blank=True, null=True,
-                                          help_text="ID de transacción PayPal, etc.")
-
-    # Evidencia del pago (solo para pagos no efectivo)
-    evidencia_pago = models.ImageField(upload_to='doctor/evidencia_pagos/', verbose_name="Evidencia de Pago",
-                                       blank=True, null=True,
-                                       help_text="Captura de pantalla o comprobante del pago")
-
-    # Notas adicionales
-    observaciones = models.TextField(verbose_name="Observaciones", blank=True, null=True)
-
-    activo = models.BooleanField(default=True, verbose_name="Activo")
+    atencion = models.ForeignKey(
+        Atencion,
+        on_delete=models.PROTECT,
+        verbose_name="Atención",
+        related_name="pagos",
+        null=True,
+        blank=True
+    )
+    metodo_pago = models.CharField(
+        max_length=20,
+        choices=MetodoPagoChoices.choices,
+        verbose_name="Método de Pago"
+    )
+    monto_total = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name="Monto Total"
+    )
+    estado = models.CharField(
+        max_length=20,
+        choices=EstadoPagoChoices.choices,
+        default=EstadoPagoChoices.PENDIENTE,
+        verbose_name="Estado"
+    )
+    fecha_pago = models.DateTimeField(
+        verbose_name="Fecha de Pago",
+        null=True,
+        blank=True
+    )
+    fecha_creacion = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Fecha de Creación"
+    )
+    nombre_pagador = models.CharField(
+        max_length=100,
+        verbose_name="Nombre del Pagador",
+        blank=True,
+        null=True
+    )
+    referencia_externa = models.CharField(
+        max_length=100,
+        verbose_name="Referencia Externa",
+        blank=True,
+        null=True,
+        help_text="ID de transacción PayPal, etc."
+    )
+    evidencia_pago = models.ImageField(
+        upload_to='doctor/evidencia_pagos/',
+        verbose_name="Evidencia de Pago",
+        blank=True,
+        null=True,
+        help_text="Captura de pantalla o comprobante del pago"
+    )
+    observaciones = models.TextField(
+        verbose_name="Observaciones",
+        blank=True,
+        null=True
+    )
+    activo = models.BooleanField(
+        default=True,
+        verbose_name="Activo"
+    )
 
     def __str__(self):
         return f"Pago {self.id} - {self.atencion} - {self.monto_total}"
 
     def save(self, *args, **kwargs):
-        # Auto-asignar fecha de pago cuando el estado cambia a 'pagado'
         if self.estado == 'pagado' and not self.fecha_pago:
             self.fecha_pago = timezone.now()
         self.clean()
@@ -332,7 +342,6 @@ class Pago(models.Model):
         verbose_name_plural = "Pagos"
 
 class DetallePago(models.Model):
-    # Relación con el pago principal
     pago = models.ForeignKey(
         'Pago',
         on_delete=models.CASCADE,
@@ -340,8 +349,6 @@ class DetallePago(models.Model):
         related_name="detalles",
         help_text="Pago al que corresponde este detalle de cobro."
     )
-
-    # Servicio facturado
     servicio_adicional = models.ForeignKey(
         'ServiciosAdicionales',
         on_delete=models.PROTECT,
@@ -349,23 +356,17 @@ class DetallePago(models.Model):
         related_name="detalles_pago",
         help_text="Servicio adicional cobrado (ej. Radiografía, Laboratorio)."
     )
-
-    # Cantidad del servicio prestado
     cantidad = models.PositiveIntegerField(
         default=1,
         verbose_name="Cantidad",
         help_text="Cantidad del servicio facturado (ej. 1 examen, 2 procedimientos, etc.)."
     )
-
-    # Precio normal sin seguro
     precio_unitario = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         verbose_name="Precio Unitario",
         help_text="Precio normal por unidad del servicio, sin considerar seguros."
     )
-
-    # Subtotal calculado (automático)
     subtotal = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -373,8 +374,6 @@ class DetallePago(models.Model):
         editable=False,
         help_text="Subtotal calculado automáticamente, considerando seguro y descuento."
     )
-
-    # Porcentaje de descuento aplicado
     descuento_porcentaje = models.DecimalField(
         max_digits=5,
         decimal_places=2,
@@ -382,15 +381,11 @@ class DetallePago(models.Model):
         verbose_name="Descuento %",
         help_text="Descuento aplicado sobre el precio base. Ejemplo: 10 para 10%."
     )
-
-    # Indica si se aplica seguro
     aplica_seguro = models.BooleanField(
         default=False,
         verbose_name="Aplica Seguro",
         help_text="Marca si el servicio tiene cobertura por seguro médico."
     )
-
-    # Valor real que cubre el seguro (reemplaza precio_unitario)
     valor_seguro = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -399,8 +394,6 @@ class DetallePago(models.Model):
         verbose_name="Valor Cubierto por Seguro",
         help_text="Valor real cubierto por el seguro. Se usará en lugar del precio normal si se aplica seguro."
     )
-
-    # Descripción del seguro utilizado
     descripcion_seguro = models.CharField(
         max_length=255,
         null=True,
@@ -410,16 +403,10 @@ class DetallePago(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        # Determinar precio base (seguro o normal)
         precio_base = self.valor_seguro if self.aplica_seguro and self.valor_seguro is not None else self.precio_unitario
-
-        # Aplicar descuento
         descuento = (self.descuento_porcentaje / Decimal(100)) * precio_base
         precio_con_descuento = precio_base - descuento
-
-        # Calcular subtotal final
         self.subtotal = round(precio_con_descuento * self.cantidad, 2)
-
         super().save(*args, **kwargs)
 
     def __str__(self):

@@ -1,0 +1,350 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalle de Pago{% endblock %}
+
+{% block extra_css %}
+<style>
+    .estado-pendiente { background-color: #fef3c7; color: #92400e; }
+    .estado-pagado { background-color: #d1fae5; color: #065f46; }
+    .estado-cancelado { background-color: #fee2e2; color: #991b1b; }
+    .estado-fallido { background-color: #fde68a; color: #92400e; }
+    
+    .metodo-efectivo { background-color: #d1fae5; color: #065f46; }
+    .metodo-paypal { background-color: #dbeafe; color: #1e40af; }
+    .metodo-tarjeta { background-color: #f3e8ff; color: #7c2d12; }
+    .metodo-transferencia { background-color: #fef3c7; color: #92400e; }
+    
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        .print-only {
+            display: block !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-3xl font-bold text-gray-800">Detalle de Pago #{{ pago.id }}</h1>
+            <div class="flex space-x-3 no-print">
+                <button onclick="window.print()" 
+                        class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                    <i class="fas fa-print mr-2"></i>Imprimir
+                </button>
+                <a href="{% url 'doctor:listar_pagos' %}" 
+                   class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                    <i class="fas fa-arrow-left mr-2"></i>Volver
+                </a>
+            </div>
+        </div>
+
+        <!-- Información del Pago -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Información Principal -->
+            <div class="space-y-4">
+                <div>
+                    <h3 class="text-lg font-semibold mb-2">Información General</h3>
+                    <div class="bg-gray-50 rounded-lg p-4 space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Fecha de Creación:</span>
+                            <span class="font-medium">{{ pago.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                        </div>
+                        {% if pago.fecha_pago %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Fecha de Pago:</span>
+                            <span class="font-medium">{{ pago.fecha_pago|date:"d/m/Y H:i" }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Estado:</span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium estado-{{ pago.estado }}">
+                                <i class="fas fa-{% if pago.estado == 'pagado' %}check-circle{% elif pago.estado == 'pendiente' %}clock{% elif pago.estado == 'cancelado' %}times-circle{% else %}exclamation-triangle{% endif %} mr-1"></i>
+                                {{ pago.get_estado_display }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Método de Pago:</span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium metodo-{{ pago.metodo_pago }}">
+                                <i class="fas fa-{% if pago.metodo_pago == 'paypal' %}paypal{% elif pago.metodo_pago == 'efectivo' %}money-bill-wave{% elif pago.metodo_pago == 'tarjeta' %}credit-card{% else %}exchange-alt{% endif %} mr-1"></i>
+                                {{ pago.get_metodo_pago_display }}
+                            </span>
+                        </div>
+                        {% if pago.referencia_externa %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Referencia:</span>
+                            <span class="font-medium">{{ pago.referencia_externa }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if pago.atencion %}
+                <div>
+                    <h3 class="text-lg font-semibold mb-2">Información de la Atención</h3>
+                    <div class="bg-blue-50 rounded-lg p-4 space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Paciente:</span>
+                            <span class="font-medium">{{ pago.atencion.paciente.nombre_completo }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Fecha Atención:</span>
+                            <span class="font-medium">{{ pago.atencion.fecha_atencion|date:"d/m/Y H:i" }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Diagnósticos:</span>
+                            <span class="font-medium">{{ pago.atencion.get_diagnosticos }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Resumen de Pago -->
+            <div>
+                <h3 class="text-lg font-semibold mb-2">Resumen del Pago</h3>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="space-y-4">
+                        <!-- Detalles -->
+                        <div class="space-y-2">
+                            {% for detalle in detalles %}
+                            <div class="flex justify-between items-start py-2 border-b border-gray-200 last:border-0">
+                                <div>
+                                    <div class="font-medium">{{ detalle.servicio_adicional.nombre_servicio }}</div>
+                                    <div class="text-sm text-gray-500">
+                                        {{ detalle.cantidad }}x ${{ detalle.precio_unitario }}
+                                        {% if detalle.descuento_porcentaje > 0 %}
+                                        <span class="text-green-600">(-{{ detalle.descuento_porcentaje }}%)</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if detalle.aplica_seguro %}
+                                    <div class="text-sm text-blue-600">
+                                        {{ detalle.descripcion_seguro }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-medium">${{ detalle.subtotal }}</div>
+                                    {% if detalle.aplica_seguro %}
+                                    <div class="text-sm text-blue-600">
+                                        Cubierto: ${{ detalle.valor_seguro }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Total -->
+                        <div class="border-t pt-4">
+                            <div class="flex justify-between text-lg font-bold">
+                                <span>Total:</span>
+                                <span>${{ pago.monto_total }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Observaciones -->
+        {% if pago.observaciones %}
+        <div class="mt-6">
+            <h3 class="text-lg font-semibold mb-2">Observaciones</h3>
+            <div class="bg-gray-50 rounded-lg p-4">
+                {{ pago.observaciones|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Evidencia de Pago -->
+        {% if pago.evidencia_pago %}
+        <div class="mt-6">
+            <h3 class="text-lg font-semibold mb-2">Evidencia de Pago</h3>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <img src="{{ pago.evidencia_pago.url }}" alt="Evidencia de pago" class="max-w-md rounded-lg shadow-md">
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Acciones -->
+    {% if pago.estado == 'pendiente' %}
+    <div class="bg-white rounded-lg shadow-md p-6 no-print">
+        <h3 class="text-lg font-semibold mb-4">Acciones Disponibles</h3>
+        <div class="flex space-x-4">
+            {% if pago.metodo_pago == 'paypal' %}
+            <div id="paypal-button-container"></div>
+            {% else %}
+            <button onclick="marcarComoPagado({{ pago.id }})" 
+                    class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                <i class="fas fa-check mr-2"></i>Marcar como Pagado
+            </button>
+            {% endif %}
+            
+            <button onclick="cancelarPago({{ pago.id }})" 
+                    class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                <i class="fas fa-times mr-2"></i>Cancelar Pago
+            </button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Versión para Imprimir -->
+<div class="print-only hidden">
+    <div class="text-center mb-8">
+        <h1 class="text-2xl font-bold">Comprobante de Pago</h1>
+        <p class="text-gray-600">{{ pago.fecha_creacion|date:"d/m/Y H:i" }}</p>
+    </div>
+    
+    <!-- Resto del contenido para imprimir... -->
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if pago.estado == 'pendiente' and pago.metodo_pago == 'paypal' %}
+<!-- PayPal SDK -->
+<script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD"></script>
+
+<script>
+paypal.Buttons({
+    createOrder: function(data, actions) {
+        return actions.order.create({
+            purchase_units: [{
+                amount: {
+                    value: '{{ pago.monto_total }}'
+                },
+                description: 'Servicios Médicos - Pago #{{ pago.id }}'
+            }]
+        });
+    },
+    onApprove: async function(data, actions) {
+        const order = await actions.order.capture();
+        
+        try {
+            const response = await fetch('/doctor/api/procesar-pago-paypal/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    pago_id: {{ pago.id }},
+                    paypal_order_id: order.id,
+                    paypal_payer_id: order.payer.payer_id
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('Pago procesado exitosamente');
+                location.reload();
+            } else {
+                alert('Error procesando el pago: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error procesando pago:', error);
+            alert('Error al procesar el pago');
+        }
+    },
+    onCancel: async function(data) {
+        try {
+            await fetch('/doctor/api/cancelar-pago-paypal/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    pago_id: {{ pago.id }}
+                })
+            });
+            alert('Pago cancelado');
+            location.reload();
+        } catch (error) {
+            console.error('Error cancelando pago:', error);
+        }
+    }
+}).render('#paypal-button-container');
+</script>
+{% endif %}
+
+<script>
+async function marcarComoPagado(pagoId) {
+    if (confirm('¿Está seguro de marcar este pago como completado?')) {
+        try {
+            const response = await fetch(`/doctor/api/procesar-pago/${pagoId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('Pago marcado como completado');
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al procesar el pago');
+        }
+    }
+}
+
+async function cancelarPago(pagoId) {
+    const motivo = prompt('Por favor, indique el motivo de la cancelación:');
+    if (!motivo) return;
+    
+    try {
+        const response = await fetch(`/doctor/api/cancelar-pago/${pagoId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ motivo })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Pago cancelado exitosamente');
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al cancelar el pago');
+    }
+}
+
+// Función auxiliar para obtener CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

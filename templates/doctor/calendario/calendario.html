@@ -539,6 +539,10 @@ async function mostrarDetalleCita(citaId) {
                                 class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">
                             Cancelar Cita
                         </button>
+                        <button onclick="crearPago(${cita.id})" 
+                                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg">
+                            <i class="fas fa-dollar-sign mr-1"></i>Pagar
+                        </button>
                         <button onclick="actualizarCita(${cita.id})" 
                                 class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
                             Actualizar
@@ -644,6 +648,17 @@ async function cargarEstadisticas() {
             const el = document.getElementById(id);
             if (el) el.textContent = '0';
         });
+    }
+}
+
+// Función para crear un nuevo pago
+async function crearPago(citaId) {
+    try {
+        // Redirigir a la página de crear pago con el ID de la cita
+        window.location.href = `/doctor/pagos/crear/?cita_id=${citaId}`;
+    } catch (error) {
+        console.error('Error redirigiendo a pagos:', error);
+        alert('Error al crear el pago');
     }
 }
 
