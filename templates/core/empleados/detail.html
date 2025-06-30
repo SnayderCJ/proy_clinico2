@@ -1,0 +1,258 @@
+{% extends 'base.html' %} {% load static %} {% block title %}{{
+empleado.nombre_completo }} - Detalles del Empleado{% endblock %} {% block
+content %}
+<div class="container mx-auto px-4 py-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center">
+      <a
+        href="{% url 'core:empleado_list' %}"
+        class="text-gray-600 hover:text-gray-900 mr-4"
+      >
+        <i class="bi bi-arrow-left text-xl"></i>
+      </a>
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">
+          {{ empleado.nombre_completo }}
+        </h1>
+        <p class="text-gray-600 mt-1">Información del Empleado</p>
+      </div>
+    </div>
+    <div class="flex space-x-2">
+      <a
+        href="{% url 'core:empleado_update' empleado.pk %}"
+        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center"
+      >
+        <i class="bi bi-pencil mr-2"></i>
+        Editar
+      </a>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Información Principal -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- Datos Personales -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+          Información Personal
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Nombres</label
+            >
+            <p class="text-gray-900">{{ empleado.nombres }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Apellidos</label
+            >
+            <p class="text-gray-900">{{ empleado.apellidos }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Cédula</label
+            >
+            <p class="text-gray-900">{{ empleado.cedula_ecuatoriana }}</p>
+          </div>
+          {% if empleado.dni %}
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >DNI Internacional</label
+            >
+            <p class="text-gray-900">{{ empleado.dni }}</p>
+          </div>
+          {% endif %}
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Fecha de Nacimiento</label
+            >
+            <p class="text-gray-900">
+              {{ empleado.fecha_nacimiento|date:"d/m/Y" }}
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-500">Edad</label>
+            <p class="text-gray-900">{{ edad }} años</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Información Laboral -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+          Información Laboral
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-500">Cargo</label>
+            <p class="text-gray-900">
+              <i class="bi bi-briefcase mr-2"></i>
+              {{ empleado.cargo.nombre }}
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Sueldo</label
+            >
+            <p class="text-gray-900">
+              <i class="bi bi-currency-dollar mr-2"></i>
+              ${{ empleado.sueldo }}
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Fecha de Ingreso</label
+            >
+            <p class="text-gray-900">
+              <i class="bi bi-calendar mr-2"></i>
+              {{ empleado.fecha_ingreso|date:"d/m/Y" }}
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Años de Servicio</label
+            >
+            <p class="text-gray-900">
+              <i class="bi bi-clock mr-2"></i>
+              {{ años_servicio }} años
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Estado</label
+            >
+            {% if empleado.activo %}
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-green-100 text-green-800"
+            >
+              <i class="bi bi-check-circle mr-1"></i>
+              Activo
+            </span>
+            {% else %}
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-red-100 text-red-800"
+            >
+              <i class="bi bi-x-circle mr-1"></i>
+              Inactivo
+            </span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Información de Contacto -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+          Información de Contacto
+        </h2>
+        <div class="grid grid-cols-1 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Dirección</label
+            >
+            <p class="text-gray-900">
+              <i class="bi bi-geo-alt mr-2"></i>
+              {{ empleado.direccion }}
+            </p>
+          </div>
+          {% if empleado.latitud and empleado.longitud %}
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Coordenadas GPS</label
+            >
+            <p class="text-gray-900">
+              <i class="bi bi-geo mr-2"></i>
+              Lat: {{ empleado.latitud }}, Lng: {{ empleado.longitud }}
+            </p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+      <!-- Foto del Empleado -->
+      <div class="bg-white rounded-lg shadow-sm p-6 text-center">
+        {% if empleado.foto %}
+        <img
+          src="{{ empleado.foto.url }}"
+          alt="{{ empleado.nombre_completo }}"
+          class="w-32 h-32 rounded-full mx-auto object-cover mb-4"
+        />
+        {% else %}
+        <div
+          class="w-32 h-32 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4"
+        >
+          <i class="bi bi-person text-blue-600 text-4xl"></i>
+        </div>
+        {% endif %}
+        <h3 class="text-lg font-medium text-gray-900">
+          {{ empleado.nombre_completo }}
+        </h3>
+        <p class="text-gray-500">{{ empleado.cargo.nombre }}</p>
+      </div>
+
+      <!-- Información Rápida -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          Información Rápida
+        </h3>
+        <div class="space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Edad</span>
+            <span class="font-semibold text-blue-600">{{ edad }} años</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Años de Servicio</span>
+            <span class="font-semibold text-green-600"
+              >{{ años_servicio }} años</span
+            >
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Sueldo</span>
+            <span class="font-semibold text-purple-600"
+              >${{ empleado.sueldo }}</span
+            >
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Estado</span>
+            {% if empleado.activo %}
+            <span class="font-semibold text-green-600">Activo</span>
+            {% else %}
+            <span class="font-semibold text-red-600">Inactivo</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Acciones Rápidas -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          Acciones Rápidas
+        </h3>
+        <div class="space-y-2">
+          <a
+            href="{% url 'core:empleado_update' empleado.pk %}"
+            class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center"
+          >
+            <i class="bi bi-pencil mr-2"></i>
+            Editar Información
+          </a>
+          {% if empleado.activo %}
+          <a
+            href="{% url 'core:empleado_delete' empleado.pk %}"
+            class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center"
+          >
+            <i class="bi bi-person-x mr-2"></i>
+            Desactivar Empleado
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

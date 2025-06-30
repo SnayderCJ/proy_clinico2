@@ -1,0 +1,145 @@
+{% extends 'base.html' %} {% load static %} {% block title %} {% if object %}
+Editar Diagnóstico{% else %}Nuevo Diagnóstico{% endif %} {% endblock %} 
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+  <!-- Header -->
+  <div class="flex items-center mb-6">
+    <a
+      href="{% url 'core:diagnostico_list' %}"
+      class="text-gray-600 hover:text-gray-900 mr-4"
+    >
+      <i class="bi bi-arrow-left text-xl"></i>
+    </a>
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">
+        {% if object %}Editar Diagnóstico{% else %}Nuevo Diagnóstico{% endif %}
+      </h1>
+      {% if object %}
+      <p class="text-gray-600 mt-1">
+        {{ object.codigo }} - {{ object.descripcion }}
+      </p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Formulario -->
+  <div class="bg-white rounded-lg shadow-sm p-6">
+    <form method="post" class="space-y-6">
+      {% csrf_token %}
+
+      <!-- Información del Diagnóstico -->
+      <div class="border-b border-gray-200 pb-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">
+          Información del Diagnóstico
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label
+              for="{{ form.codigo.id_for_label }}"
+              class="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Código del Diagnóstico *
+            </label>
+            {{ form.codigo }} {% if form.codigo.errors %}
+            <p class="text-red-500 text-sm mt-1">{{ form.codigo.errors.0 }}</p>
+            {% endif %}
+            <p class="text-sm text-gray-500 mt-1">
+              Ejemplo: A09, J00, K35.2 (código CIE-10 o similar)
+            </p>
+          </div>
+          <div class="flex items-center">
+            <div class="flex items-center h-5">{{ form.activo }}</div>
+            <div class="ml-3 text-sm">
+              <label
+                for="{{ form.activo.id_for_label }}"
+                class="font-medium text-gray-700"
+              >
+                Diagnóstico activo
+              </label>
+              <p class="text-gray-500">
+                Marcar si el diagnóstico está disponible para uso
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <label
+            for="{{ form.descripcion.id_for_label }}"
+            class="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Descripción del Diagnóstico *
+          </label>
+          {{ form.descripcion }} {% if form.descripcion.errors %}
+          <p class="text-red-500 text-sm mt-1">
+            {{ form.descripcion.errors.0 }}
+          </p>
+          {% endif %}
+          <p class="text-sm text-gray-500 mt-1">
+            Nombre completo del diagnóstico según el código
+          </p>
+        </div>
+      </div>
+
+      <!-- Datos Adicionales -->
+      <div>
+        <h3 class="text-lg font-medium text-gray-900 mb-4">
+          Información Adicional
+        </h3>
+        <div>
+          <label
+            for="{{ form.datos_adicionales.id_for_label }}"
+            class="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Datos Adicionales
+          </label>
+          {{ form.datos_adicionales }} {% if form.datos_adicionales.errors %}
+          <p class="text-red-500 text-sm mt-1">
+            {{ form.datos_adicionales.errors.0 }}
+          </p>
+          {% endif %}
+          <p class="text-sm text-gray-500 mt-1">
+            Observaciones clínicas, notas o contexto específico del diagnóstico
+            (opcional)
+          </p>
+        </div>
+      </div>
+
+      <!-- Botones -->
+      <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+        <a
+          href="{% if object %}{% url 'core:diagnostico_detail' object.pk %}{% else %}{% url 'core:diagnostico_list' %}{% endif %}"
+          class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md"
+        >
+          Cancelar
+        </a>
+        <button
+          type="submit"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+        >
+          {% if object %}
+          <i class="bi bi-check-circle mr-2"></i>
+          Actualizar Diagnóstico {% else %}
+          <i class="bi bi-plus-circle mr-2"></i>
+          Crear Diagnóstico {% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Validación del código en tiempo real
+  document.addEventListener("DOMContentLoaded", function () {
+    const codigoInput = document.getElementById(
+      "{{ form.codigo.id_for_label }}"
+    );
+    if (codigoInput) {
+      codigoInput.addEventListener("input", function () {
+        const codigo = this.value.toUpperCase();
+        this.value = codigo;
+      });
+    }
+  });
+</script>
+{% endblock %}

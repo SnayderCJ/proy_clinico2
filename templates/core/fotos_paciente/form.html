@@ -1,0 +1,226 @@
+{% extends 'base.html' %} {% load static %} {% block title %} {% if object
+%}Editar Foto del Paciente{% else %}Nueva Foto del Paciente{% endif %} {%
+endblock %} {% block content %}
+<div class="container mx-auto px-4 py-6">
+  <!-- Header -->
+  <div class="flex items-center mb-6">
+    <a
+      href="{% url 'core:foto_paciente_list' paciente.pk %}"
+      class="text-gray-600 hover:text-gray-900 mr-4"
+    >
+      <i class="bi bi-arrow-left text-xl"></i>
+    </a>
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">
+        {% if object %}Editar Foto del Paciente{% else %}Nueva Foto del
+        Paciente{% endif %}
+      </h1>
+      <p class="text-gray-600 mt-1">{{ paciente.nombre_completo }}</p>
+    </div>
+  </div>
+
+  <!-- Información del Paciente -->
+  <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+    <div class="flex items-center">
+      <div class="flex-shrink-0 h-12 w-12">
+        {% if paciente.get_image %}
+        <img
+          class="h-12 w-12 rounded-full object-cover"
+          src="{{ paciente.get_image }}"
+          alt="{{ paciente.nombre_completo }}"
+        />
+        {% else %}
+        <div
+          class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center"
+        >
+          <i class="bi bi-person text-blue-600"></i>
+        </div>
+        {% endif %}
+      </div>
+      <div class="ml-4">
+        <h2 class="text-lg font-semibold text-gray-900">
+          {{ paciente.nombre_completo }}
+        </h2>
+        <p class="text-sm text-gray-500">
+          Cédula: {{ paciente.cedula_ecuatoriana }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulario -->
+  <div class="bg-white rounded-lg shadow-sm p-6">
+    <form method="post" enctype="multipart/form-data" class="space-y-6">
+      {% csrf_token %}
+
+      <!-- Imagen Actual (si existe) -->
+      {% if object and object.imagen %}
+      <div class="border-b border-gray-200 pb-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Imagen Actual</h3>
+        <div class="flex items-start space-x-4">
+          <img
+            src="{{ object.imagen.url }}"
+            alt="Foto actual"
+            class="w-32 h-32 rounded-lg object-cover"
+          />
+          <div>
+            <p class="text-sm text-gray-600">
+              <i class="bi bi-calendar mr-1"></i>
+              Subida el {{ object.fecha_subida|date:"d/m/Y H:i" }}
+            </p>
+            {% if object.descripcion %}
+            <p class="text-sm text-gray-900 mt-1">{{ object.descripcion }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Selección de Imagen -->
+      <div class="border-b border-gray-200 pb-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">
+          {% if object %}Cambiar Imagen{% else %}Seleccionar Imagen{% endif %}
+        </h3>
+        <div>
+          <label
+            for="{{ form.imagen.id_for_label }}"
+            class="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Imagen del Paciente *
+          </label>
+          {{ form.imagen }} {% if form.imagen.errors %}
+          <p class="text-red-500 text-sm mt-1">{{ form.imagen.errors.0 }}</p>
+          {% endif %}
+          <p class="text-sm text-gray-500 mt-1">
+            Formatos permitidos: JPG, PNG, GIF. Tamaño máximo: 10MB
+          </p>
+        </div>
+
+        <!-- Preview de la imagen -->
+        <div id="image-preview" class="mt-4 hidden">
+          <label class="block text-sm font-medium text-gray-700 mb-2"
+            >Vista Previa</label
+          >
+          <img
+            id="preview-img"
+            class="w-48 h-48 rounded-lg object-cover border border-gray-300"
+          />
+        </div>
+      </div>
+
+      <!-- Descripción -->
+      <div>
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Descripción</h3>
+        <div>
+          <label
+            for="{{ form.descripcion.id_for_label }}"
+            class="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Descripción de la Imagen
+          </label>
+          {{ form.descripcion }} {% if form.descripcion.errors %}
+          <p class="text-red-500 text-sm mt-1">
+            {{ form.descripcion.errors.0 }}
+          </p>
+          {% endif %}
+          <p class="text-sm text-gray-500 mt-1">
+            Comentario opcional sobre la imagen (ej. cicatriz, antes/después,
+            etc.)
+          </p>
+        </div>
+      </div>
+
+      <!-- Información Adicional -->
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex items-start">
+          <i class="bi bi-info-circle text-blue-600 text-xl mr-3 mt-1"></i>
+          <div>
+            <h3 class="text-blue-900 font-medium">
+              Información sobre las Fotos
+            </h3>
+            <p class="text-blue-700 mt-1">
+              Las fotos del paciente son útiles para documentar el progreso
+              médico, registrar lesiones, cicatrices o cualquier aspecto visual
+              relevante para el tratamiento.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones -->
+      <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+        <a
+          href="{% url 'core:foto_paciente_list' paciente.pk %}"
+          class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md"
+        >
+          Cancelar
+        </a>
+        <button
+          type="submit"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+        >
+          {% if object %}
+          <i class="bi bi-check-circle mr-2"></i>
+          Actualizar Foto {% else %}
+          <i class="bi bi-plus-circle mr-2"></i>
+          Subir Foto {% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Preview de la imagen seleccionada
+  document.addEventListener("DOMContentLoaded", function () {
+    const imageInput = document.getElementById(
+      "{{ form.imagen.id_for_label }}"
+    );
+    const previewContainer = document.getElementById("image-preview");
+    const previewImg = document.getElementById("preview-img");
+
+    if (imageInput) {
+      imageInput.addEventListener("change", function (e) {
+        const file = e.target.files[0];
+
+        if (file) {
+          // Validar tipo de archivo
+          const validTypes = [
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/gif",
+          ];
+          if (!validTypes.includes(file.type)) {
+            alert(
+              "Por favor seleccione un archivo de imagen válido (JPG, PNG, GIF)"
+            );
+            this.value = "";
+            previewContainer.classList.add("hidden");
+            return;
+          }
+
+          // Validar tamaño (10MB máximo)
+          const maxSize = 10 * 1024 * 1024; // 10MB en bytes
+          if (file.size > maxSize) {
+            alert("El archivo es demasiado grande. El tamaño máximo es 10MB.");
+            this.value = "";
+            previewContainer.classList.add("hidden");
+            return;
+          }
+
+          // Mostrar preview
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            previewImg.src = e.target.result;
+            previewContainer.classList.remove("hidden");
+          };
+          reader.readAsDataURL(file);
+        } else {
+          previewContainer.classList.add("hidden");
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Empleados{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Gestión de Empleados</h1>
+            <p class="text-gray-600 mt-1">Total: {{ total_empleados }} empleados | Activos: {{ empleados_activos }}</p>
+        </div>
+        <a href="{% url 'core:empleado_create' %}" 
+           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
+            <i class="bi bi-plus-circle mr-2"></i>
+            Nuevo Empleado
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+                <input type="text" name="search" value="{{ search }}" 
+                       placeholder="Nombre, apellido, cédula..."
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
+                <select name="cargo" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <option value="">Todos</option>
+                    {% for cargo in cargos %}
+                        <option value="{{ cargo.id }}" {% if cargo.id|stringformat:"s" == cargo_selected %}selected{% endif %}>
+                            {{ cargo.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                <select name="activo" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <option value="">Todos</option>
+                    <option value="true" {% if activo_selected == 'true' %}selected{% endif %}>Activos</option>
+                    <option value="false" {% if activo_selected == 'false' %}selected{% endif %}>Inactivos</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md mr-2">
+                    <i class="bi bi-search mr-1"></i>
+                    Filtrar
+                </button>
+                <a href="{% url 'core:empleado_list' %}" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md">
+                    Limpiar
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de Empleados -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        {% if empleados %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Empleado
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Cargo
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Contacto
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Información
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Estado
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Acciones
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for empleado in empleados %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        {% if empleado.get_image %}
+                                            <img class="h-10 w-10 rounded-full object-cover" src="{{ empleado.get_image }}" alt="{{ empleado.nombre_completo }}">
+                                        {% else %}
+                                            <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                                                <i class="bi bi-person-workspace text-indigo-600"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ empleado.nombre_completo }}
+                                        </div>
+                                        <div class="text-sm text-gray-500">
+                                            CI: {{ empleado.cedula_ecuatoriana }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if empleado.cargo %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                        {{ empleado.cargo.nombre }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-gray-500 text-sm">Sin cargo</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">
+                                    {{ empleado.telefono }}
+                                </div>
+                                {% if empleado.email %}
+                                <div class="text-sm text-gray-500">
+                                    {{ empleado.email }}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">
+                                    {% if empleado.fecha_ingreso %}
+                                        Ingreso: {{ empleado.fecha_ingreso|date:"d/m/Y" }}
+                                    {% endif %}
+                                </div>
+                                {% if empleado.salario %}
+                                <div class="text-sm text-gray-500">
+                                    Salario: ${{ empleado.salario }}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if empleado.activo %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <i class="bi bi-check-circle mr-1"></i>
+                                        Activo
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        <i class="bi bi-x-circle mr-1"></i>
+                                        Inactivo
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div class="flex space-x-2">
+                                    <a href="{% url 'core:empleado_detail' empleado.pk %}" 
+                                       class="text-blue-600 hover:text-blue-900" title="Ver detalles">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'core:empleado_update' empleado.pk %}" 
+                                       class="text-green-600 hover:text-green-900" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'core:empleado_delete' empleado.pk %}" 
+                                       class="text-red-600 hover:text-red-900" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            {% if is_paginated %}
+            <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Anterior
+                        </a>
+                    {% endif %}
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Siguiente
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Mostrando
+                            <span class="font-medium">{{ page_obj.start_index }}</span>
+                            a
+                            <span class="font-medium">{{ page_obj.end_index }}</span>
+                            de
+                            <span class="font-medium">{{ page_obj.paginator.count }}</span>
+                            resultados
+                        </p>
+                    </div>
+                    {% include 'components/pagination.html' %}
+                </div>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-12">
+                <i class="bi bi-person-workspace text-gray-400 text-6xl mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No hay empleados registrados</h3>
+                <p class="text-gray-500 mb-4">Comience agregando empleados al sistema.</p>
+                <a href="{% url 'core:empleado_create' %}" 
+                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                    <i class="bi bi-plus-circle mr-2"></i>
+                    Agregar Empleado
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

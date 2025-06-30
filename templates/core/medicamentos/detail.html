@@ -1,0 +1,355 @@
+{% extends 'base.html' %} {% load static %} {% block title %}{{
+medicamento.nombre }} - Detalles del Medicamento{% endblock %} {% block content
+%}
+<div class="container mx-auto px-4 py-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center">
+      <a
+        href="{% url 'core:medicamento_list' %}"
+        class="text-gray-600 hover:text-gray-900 mr-4"
+      >
+        <i class="bi bi-arrow-left text-xl"></i>
+      </a>
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">
+          {{ medicamento.nombre }}
+        </h1>
+        <p class="text-gray-600 mt-1">{{ medicamento.tipo.nombre }}</p>
+      </div>
+    </div>
+    <div class="flex space-x-2">
+      <a
+        href="{% url 'core:medicamento_update' medicamento.pk %}"
+        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center"
+      >
+        <i class="bi bi-pencil mr-2"></i>
+        Editar
+      </a>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Información Principal -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- Información Básica -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+          Información Básica
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Nombre</label
+            >
+            <p class="text-gray-900 text-lg">{{ medicamento.nombre }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-500">Tipo</label>
+            <p class="text-gray-900">
+              <i class="bi bi-tag mr-2"></i>
+              {{ medicamento.tipo.nombre }}
+            </p>
+          </div>
+          {% if medicamento.marca_medicamento %}
+          <div>
+            <label class="block text-sm font-medium text-gray-500">Marca</label>
+            <p class="text-gray-900">
+              <i class="bi bi-award mr-2"></i>
+              {{ medicamento.marca_medicamento.nombre }}
+            </p>
+          </div>
+          {% endif %} {% if medicamento.concentracion %}
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Concentración</label
+            >
+            <p class="text-gray-900">
+              <i class="bi bi-droplet mr-2"></i>
+              {{ medicamento.concentracion }}
+            </p>
+          </div>
+          {% endif %}
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Vía de Administración</label
+            >
+            <p class="text-gray-900">
+              <i class="bi bi-arrow-right-circle mr-2"></i>
+              {{ medicamento.get_via_administracion_display }}
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Tipo de Medicamento</label
+            >
+            {% if medicamento.comercial %}
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+            >
+              <i class="bi bi-building mr-1"></i>
+              Comercial
+            </span>
+            {% else %}
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-gray-100 text-gray-800"
+            >
+              <i class="bi bi-generic mr-1"></i>
+              Genérico
+            </span>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if medicamento.descripcion %}
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-gray-500"
+            >Descripción</label
+          >
+          <p class="text-gray-900 whitespace-pre-line">
+            {{ medicamento.descripcion }}
+          </p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Inventario y Precio -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+          Inventario y Precio
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Stock Disponible</label
+            >
+            <div class="flex items-center mt-1">
+              {% if medicamento.cantidad < 5 %}
+              <span
+                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800"
+              >
+                <i class="bi bi-exclamation-triangle mr-2"></i>
+                {{ medicamento.cantidad }} unidades - Stock crítico
+              </span>
+              {% elif medicamento.cantidad < 10 %}
+              <span
+                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800"
+              >
+                <i class="bi bi-exclamation-circle mr-2"></i>
+                {{ medicamento.cantidad }} unidades - Stock bajo
+              </span>
+              {% else %}
+              <span
+                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800"
+              >
+                <i class="bi bi-check-circle mr-2"></i>
+                {{ medicamento.cantidad }} unidades - Stock normal
+              </span>
+              {% endif %}
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Precio Unitario</label
+            >
+            <p class="text-gray-900 text-lg font-semibold">
+              <i class="bi bi-currency-dollar mr-2"></i>
+              ${{ medicamento.precio }}
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Valor Total del Stock</label
+            >
+            <p class="text-gray-900 text-lg font-semibold text-green-600">
+              <i class="bi bi-calculator mr-2"></i>
+              ${% widthratio medicamento.cantidad 1 medicamento.precio %}
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Estado</label
+            >
+            {% if medicamento.activo %}
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-green-100 text-green-800"
+            >
+              <i class="bi bi-check-circle mr-1"></i>
+              Activo
+            </span>
+            {% else %}
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-red-100 text-red-800"
+            >
+              <i class="bi bi-x-circle mr-1"></i>
+              Inactivo
+            </span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Alerta de Stock -->
+      {% if medicamento.cantidad < 10 %}
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <div
+          class="{% if medicamento.cantidad < 5 %}bg-red-50 border border-red-200{% else %}bg-yellow-50 border border-yellow-200{% endif %} rounded-lg p-4"
+        >
+          <div class="flex items-start">
+            {% if medicamento.cantidad < 5 %}
+            <i
+              class="bi bi-exclamation-triangle text-red-600 text-xl mr-3 mt-1"
+            ></i>
+            <div>
+              <h3 class="text-red-900 font-medium">Stock Crítico</h3>
+              <p class="text-red-700 mt-1">
+                El medicamento tiene un stock muy bajo ({{ medicamento.cantidad
+                }} unidades). Se recomienda realizar un pedido urgente para
+                evitar desabastecimiento.
+              </p>
+            </div>
+            {% else %}
+            <i
+              class="bi bi-exclamation-circle text-yellow-600 text-xl mr-3 mt-1"
+            ></i>
+            <div>
+              <h3 class="text-yellow-900 font-medium">Stock Bajo</h3>
+              <p class="text-yellow-700 mt-1">
+                El medicamento tiene un stock bajo ({{ medicamento.cantidad }}
+                unidades). Considere realizar un pedido pronto.
+              </p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+      <!-- Imagen del Medicamento -->
+      <div class="bg-white rounded-lg shadow-sm p-6 text-center">
+        {% if medicamento.foto %}
+        <img
+          src="{{ medicamento.foto.url }}"
+          alt="{{ medicamento.nombre }}"
+          class="w-32 h-32 rounded-lg mx-auto object-cover mb-4"
+        />
+        {% else %}
+        <div
+          class="w-32 h-32 rounded-lg bg-green-100 flex items-center justify-center mx-auto mb-4"
+        >
+          <i class="bi bi-capsule text-green-600 text-4xl"></i>
+        </div>
+        {% endif %}
+        <h3 class="text-lg font-medium text-gray-900">
+          {{ medicamento.nombre }}
+        </h3>
+        <p class="text-gray-500">{{ medicamento.tipo.nombre }}</p>
+      </div>
+
+      <!-- Información Rápida -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          Información Rápida
+        </h3>
+        <div class="space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Stock</span>
+            {% if medicamento.cantidad < 5 %}
+            <span class="font-semibold text-red-600"
+              >{{ medicamento.cantidad }} unidades</span
+            >
+            {% elif medicamento.cantidad < 10 %}
+            <span class="font-semibold text-yellow-600"
+              >{{ medicamento.cantidad }} unidades</span
+            >
+            {% else %}
+            <span class="font-semibold text-green-600"
+              >{{ medicamento.cantidad }} unidades</span
+            >
+            {% endif %}
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Precio</span>
+            <span class="font-semibold text-blue-600"
+              >${{ medicamento.precio }}</span
+            >
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Valor Total</span>
+            <span class="font-semibold text-purple-600"
+              >${% widthratio medicamento.cantidad 1 medicamento.precio %}</span
+            >
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Estado</span>
+            {% if medicamento.activo %}
+            <span class="font-semibold text-green-600">Activo</span>
+            {% else %}
+            <span class="font-semibold text-red-600">Inactivo</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Acciones Rápidas -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          Acciones Rápidas
+        </h3>
+        <div class="space-y-2">
+          <a
+            href="{% url 'core:medicamento_update' medicamento.pk %}"
+            class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center"
+          >
+            <i class="bi bi-pencil mr-2"></i>
+            Editar Medicamento
+          </a>
+          {% if medicamento.activo %}
+          <a
+            href="{% url 'core:medicamento_delete' medicamento.pk %}"
+            class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center"
+          >
+            <i class="bi bi-archive mr-2"></i>
+            Desactivar Medicamento
+          </a>
+          {% endif %}
+          <a
+            href="{% url 'core:medicamento_list' %}"
+            class="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center"
+          >
+            <i class="bi bi-list mr-2"></i>
+            Ver Todos los Medicamentos
+          </a>
+        </div>
+      </div>
+
+      <!-- Estado del Stock -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          Estado del Stock
+        </h3>
+        <div class="text-sm text-gray-600 space-y-2">
+          <p>
+            <i class="bi bi-info-circle mr-2"></i>
+            Stock actual: {{ medicamento.cantidad }} unidades
+          </p>
+          <p>
+            <i class="bi bi-graph-up mr-2"></i>
+            Valor del inventario: ${% widthratio medicamento.cantidad 1
+            medicamento.precio %}
+          </p>
+          {% if medicamento.cantidad < 10 %}
+          <p class="text-yellow-600">
+            <i class="bi bi-exclamation-triangle mr-2"></i>
+            Se recomienda reabastecer pronto
+          </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,169 @@
+{% extends 'base.html' %} {% load static %} {% block title %}Fotos del Paciente
+- {{ paciente.nombre_completo }}{% endblock %} {% block content %}
+<div class="container mx-auto px-4 py-6">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <div class="flex items-center">
+      <a
+        href="{% url 'core:paciente_detail' paciente.pk %}"
+        class="text-gray-600 hover:text-gray-900 mr-4"
+      >
+        <i class="bi bi-arrow-left text-xl"></i>
+      </a>
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Fotos del Paciente</h1>
+        <p class="text-gray-600 mt-1">{{ paciente.nombre_completo }}</p>
+      </div>
+    </div>
+    <a
+      href="{% url 'core:foto_paciente_create' paciente.pk %}"
+      class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+    >
+      <i class="bi bi-plus-circle mr-2"></i>
+      Nueva Foto
+    </a>
+  </div>
+
+  <!-- Información del Paciente -->
+  <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+    <div class="flex items-center">
+      <div class="flex-shrink-0 h-16 w-16">
+        {% if paciente.get_image %}
+        <img
+          class="h-16 w-16 rounded-full object-cover"
+          src="{{ paciente.get_image }}"
+          alt="{{ paciente.nombre_completo }}"
+        />
+        {% else %}
+        <div
+          class="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center"
+        >
+          <i class="bi bi-person text-blue-600 text-2xl"></i>
+        </div>
+        {% endif %}
+      </div>
+      <div class="ml-4">
+        <h2 class="text-xl font-semibold text-gray-900">
+          {{ paciente.nombre_completo }}
+        </h2>
+        <div class="mt-1 text-sm text-gray-500">
+          <p>Cédula: {{ paciente.cedula_ecuatoriana }}</p>
+          <p>Total de fotos: {{ fotos|length }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grid de Fotos -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% if fotos %} {% for foto in fotos %}
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div class="aspect-w-16 aspect-h-12">
+        <img
+          src="{{ foto.imagen.url }}"
+          alt="Foto de {{ paciente.nombre_completo }}"
+          class="w-full h-full object-cover"
+        />
+      </div>
+      <div class="p-4">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-sm text-gray-500">
+              <i class="bi bi-calendar mr-1"></i>
+              {{ foto.fecha_subida|date:"d/m/Y H:i" }}
+            </p>
+            {% if foto.descripcion %}
+            <p class="text-sm text-gray-900 mt-1">
+              {{ foto.descripcion|truncatechars:100 }}
+            </p>
+            {% endif %}
+          </div>
+          <div class="flex space-x-2">
+            <a
+              href="{{ foto.imagen.url }}"
+              target="_blank"
+              class="text-blue-600 hover:text-blue-900"
+              title="Ver imagen completa"
+            >
+              <i class="bi bi-arrows-fullscreen"></i>
+            </a>
+            <a
+              href="{% url 'core:foto_paciente_update' foto.pk %}"
+              class="text-green-600 hover:text-green-900"
+              title="Editar descripción"
+            >
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a
+              href="{% url 'core:foto_paciente_delete' foto.pk %}"
+              class="text-red-600 hover:text-red-900"
+              title="Eliminar foto"
+            >
+              <i class="bi bi-trash"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %} {% else %}
+    <div class="col-span-full">
+      <div class="text-center py-12 bg-white rounded-lg shadow-sm">
+        <i class="bi bi-images text-gray-400 text-6xl mb-4"></i>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">
+          No hay fotos registradas
+        </h3>
+        <p class="text-gray-500 mb-4">Comience agregando fotos del paciente.</p>
+        <a
+          href="{% url 'core:foto_paciente_create' paciente.pk %}"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg inline-flex items-center"
+        >
+          <i class="bi bi-plus-circle mr-2"></i>
+          Agregar Primera Foto
+        </a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Paginación -->
+  {% if is_paginated %}
+  <div class="mt-6">
+    <div
+      class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 rounded-lg shadow-sm"
+    >
+      <div class="flex-1 flex justify-between sm:hidden">
+        {% if page_obj.has_previous %}
+        <a
+          href="?page={{ page_obj.previous_page_number }}"
+          class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+        >
+          Anterior
+        </a>
+        {% endif %} {% if page_obj.has_next %}
+        <a
+          href="?page={{ page_obj.next_page_number }}"
+          class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+        >
+          Siguiente
+        </a>
+        {% endif %}
+      </div>
+      <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+        <div>
+          <p class="text-sm text-gray-700">
+            Mostrando
+            <span class="font-medium">{{ page_obj.start_index }}</span>
+            a
+            <span class="font-medium">{{ page_obj.end_index }}</span>
+            de
+            <span class="font-medium">{{ page_obj.paginator.count }}</span>
+            fotos
+          </p>
+        </div>
+        {% include 'components/pagination.html' %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

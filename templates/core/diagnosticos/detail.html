@@ -1,0 +1,214 @@
+{% extends 'base.html' %} {% load static %} {% block title %}{{
+diagnostico.codigo }} - Detalles del Diagnóstico{% endblock %} {% block content
+%}
+<div class="container mx-auto px-4 py-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center">
+      <a
+        href="{% url 'core:diagnostico_list' %}"
+        class="text-gray-600 hover:text-gray-900 mr-4"
+      >
+        <i class="bi bi-arrow-left text-xl"></i>
+      </a>
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">
+          {{ diagnostico.codigo }}
+        </h1>
+        <p class="text-gray-600 mt-1">{{ diagnostico.descripcion }}</p>
+      </div>
+    </div>
+    <div class="flex space-x-2">
+      <a
+        href="{% url 'core:diagnostico_update' diagnostico.pk %}"
+        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center"
+      >
+        <i class="bi bi-pencil mr-2"></i>
+        Editar
+      </a>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Información Principal -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- Información del Diagnóstico -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+          Información del Diagnóstico
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Código</label
+            >
+            <p class="text-gray-900 font-mono text-lg">
+              {{ diagnostico.codigo }}
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Estado</label
+            >
+            {% if diagnostico.activo %}
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-green-100 text-green-800"
+            >
+              <i class="bi bi-check-circle mr-1"></i>
+              Activo
+            </span>
+            {% else %}
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-red-100 text-red-800"
+            >
+              <i class="bi bi-x-circle mr-1"></i>
+              Inactivo
+            </span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-gray-500"
+            >Descripción</label
+          >
+          <p class="text-gray-900 text-lg">{{ diagnostico.descripcion }}</p>
+        </div>
+      </div>
+
+      <!-- Datos Adicionales -->
+      {% if diagnostico.datos_adicionales %}
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+          Datos Adicionales
+        </h2>
+        <div class="prose max-w-none">
+          <p class="text-gray-700 whitespace-pre-line">
+            {{ diagnostico.datos_adicionales }}
+          </p>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Información de Uso -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+          Información de Uso
+        </h2>
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div class="flex items-start">
+            <i class="bi bi-info-circle text-blue-600 text-xl mr-3 mt-1"></i>
+            <div>
+              <h3 class="text-blue-900 font-medium">
+                Sobre los códigos de diagnóstico
+              </h3>
+              <p class="text-blue-700 mt-1">
+                Los códigos de diagnóstico siguen estándares internacionales
+                como CIE-10 (Clasificación Internacional de Enfermedades). Estos
+                códigos permiten una clasificación uniforme de enfermedades y
+                problemas de salud.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+      <!-- Icono del Diagnóstico -->
+      <div class="bg-white rounded-lg shadow-sm p-6 text-center">
+        <div
+          class="w-32 h-32 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4"
+        >
+          <i class="bi bi-clipboard-pulse text-purple-600 text-4xl"></i>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900">
+          {{ diagnostico.codigo }}
+        </h3>
+        <p class="text-gray-500">Diagnóstico Médico</p>
+      </div>
+
+      <!-- Información Rápida -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          Información Rápida
+        </h3>
+        <div class="space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Código</span>
+            <span class="font-semibold text-purple-600 font-mono"
+              >{{ diagnostico.codigo }}</span
+            >
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Estado</span>
+            {% if diagnostico.activo %}
+            <span class="font-semibold text-green-600">Activo</span>
+            {% else %}
+            <span class="font-semibold text-red-600">Inactivo</span>
+            {% endif %}
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Datos Adicionales</span>
+            {% if diagnostico.datos_adicionales %}
+            <span class="font-semibold text-blue-600">Sí</span>
+            {% else %}
+            <span class="font-semibold text-gray-600">No</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Acciones Rápidas -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          Acciones Rápidas
+        </h3>
+        <div class="space-y-2">
+          <a
+            href="{% url 'core:diagnostico_update' diagnostico.pk %}"
+            class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center"
+          >
+            <i class="bi bi-pencil mr-2"></i>
+            Editar Diagnóstico
+          </a>
+          <a
+            href="{% url 'core:diagnostico_delete' diagnostico.pk %}"
+            class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center"
+          >
+            <i class="bi bi-trash mr-2"></i>
+            Eliminar Diagnóstico
+          </a>
+          <a
+            href="{% url 'core:diagnostico_list' %}"
+            class="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center"
+          >
+            <i class="bi bi-list mr-2"></i>
+            Ver Todos los Diagnósticos
+          </a>
+        </div>
+      </div>
+
+      <!-- Información Adicional -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          Información Adicional
+        </h3>
+        <div class="text-sm text-gray-600 space-y-2">
+          <p>
+            <i class="bi bi-book mr-2"></i>
+            Los códigos CIE-10 son utilizados mundialmente para la clasificación
+            de enfermedades.
+          </p>
+          <p>
+            <i class="bi bi-hospital mr-2"></i>
+            Este diagnóstico puede ser utilizado en atenciones médicas y
+            reportes.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

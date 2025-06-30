@@ -1,0 +1,287 @@
+{% extends 'base.html' %} {% load static %} {% block title %} {% if object
+%}Editar Medicamento{% else %}Nuevo Medicamento{% endif %} {% endblock %} {%
+block content %}
+<div class="container mx-auto px-4 py-6">
+  <!-- Header -->
+  <div class="flex items-center mb-6">
+    <a
+      href="{% url 'core:medicamento_list' %}"
+      class="text-gray-600 hover:text-gray-900 mr-4"
+    >
+      <i class="bi bi-arrow-left text-xl"></i>
+    </a>
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">
+        {% if object %}Editar Medicamento{% else %}Nuevo Medicamento{% endif %}
+      </h1>
+      {% if object %}
+      <p class="text-gray-600 mt-1">{{ object.nombre }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Formulario -->
+  <div class="bg-white rounded-lg shadow-sm p-6">
+    <form method="post" enctype="multipart/form-data" class="space-y-6">
+      {% csrf_token %}
+
+      <!-- Información Básica -->
+      <div class="border-b border-gray-200 pb-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">
+          Información Básica
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label
+              for="{{ form.nombre.id_for_label }}"
+              class="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Nombre del Medicamento *
+            </label>
+            {{ form.nombre }} {% if form.nombre.errors %}
+            <p class="text-red-500 text-sm mt-1">{{ form.nombre.errors.0 }}</p>
+            {% endif %}
+          </div>
+          <div>
+            <label
+              for="{{ form.tipo.id_for_label }}"
+              class="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Tipo de Medicamento *
+            </label>
+            {{ form.tipo }} {% if form.tipo.errors %}
+            <p class="text-red-500 text-sm mt-1">{{ form.tipo.errors.0 }}</p>
+            {% endif %}
+          </div>
+          <div>
+            <label
+              for="{{ form.marca_medicamento.id_for_label }}"
+              class="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Marca del Medicamento
+            </label>
+            {{ form.marca_medicamento }} {% if form.marca_medicamento.errors %}
+            <p class="text-red-500 text-sm mt-1">
+              {{ form.marca_medicamento.errors.0 }}
+            </p>
+            {% endif %}
+          </div>
+          <div>
+            <label
+              for="{{ form.concentracion.id_for_label }}"
+              class="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Concentración
+            </label>
+            {{ form.concentracion }} {% if form.concentracion.errors %}
+            <p class="text-red-500 text-sm mt-1">
+              {{ form.concentracion.errors.0 }}
+            </p>
+            {% endif %}
+            <p class="text-sm text-gray-500 mt-1">Ejemplo: 500mg, 1g, 5%</p>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <label
+            for="{{ form.descripcion.id_for_label }}"
+            class="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Descripción del Medicamento
+          </label>
+          {{ form.descripcion }} {% if form.descripcion.errors %}
+          <p class="text-red-500 text-sm mt-1">
+            {{ form.descripcion.errors.0 }}
+          </p>
+          {% endif %}
+          <p class="text-sm text-gray-500 mt-1">
+            Uso, indicaciones o precauciones relevantes
+          </p>
+        </div>
+      </div>
+
+      <!-- Administración y Comercialización -->
+      <div class="border-b border-gray-200 pb-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">
+          Administración y Comercialización
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label
+              for="{{ form.via_administracion.id_for_label }}"
+              class="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Vía de Administración *
+            </label>
+            {{ form.via_administracion }} {% if form.via_administracion.errors
+            %}
+            <p class="text-red-500 text-sm mt-1">
+              {{ form.via_administracion.errors.0 }}
+            </p>
+            {% endif %}
+          </div>
+          <div class="flex items-center">
+            <div class="flex items-center h-5">{{ form.comercial }}</div>
+            <div class="ml-3 text-sm">
+              <label
+                for="{{ form.comercial.id_for_label }}"
+                class="font-medium text-gray-700"
+              >
+                Medicamento comercial
+              </label>
+              <p class="text-gray-500">
+                Desmarcar si es un medicamento genérico
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inventario y Precio -->
+      <div class="border-b border-gray-200 pb-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">
+          Inventario y Precio
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label
+              for="{{ form.cantidad.id_for_label }}"
+              class="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Stock Disponible *
+            </label>
+            {{ form.cantidad }} {% if form.cantidad.errors %}
+            <p class="text-red-500 text-sm mt-1">
+              {{ form.cantidad.errors.0 }}
+            </p>
+            {% endif %}
+            <p class="text-sm text-gray-500 mt-1">
+              Cantidad actual disponible en inventario
+            </p>
+          </div>
+          <div>
+            <label
+              for="{{ form.precio.id_for_label }}"
+              class="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Precio Unitario *
+            </label>
+            {{ form.precio }} {% if form.precio.errors %}
+            <p class="text-red-500 text-sm mt-1">{{ form.precio.errors.0 }}</p>
+            {% endif %}
+            <p class="text-sm text-gray-500 mt-1">
+              Precio en dólares por unidad
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <div class="flex items-center">
+            <div class="flex items-center h-5">{{ form.activo }}</div>
+            <div class="ml-3 text-sm">
+              <label
+                for="{{ form.activo.id_for_label }}"
+                class="font-medium text-gray-700"
+              >
+                Medicamento activo
+              </label>
+              <p class="text-gray-500">
+                Marcar si el medicamento está disponible para uso
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Foto -->
+      <div>
+        <h3 class="text-lg font-medium text-gray-900 mb-4">
+          Imagen del Medicamento
+        </h3>
+        <div class="flex items-center space-x-4">
+          {% if object and object.foto %}
+          <img
+            src="{{ object.foto.url }}"
+            alt="{{ object.nombre }}"
+            class="h-20 w-20 rounded-lg object-cover"
+          />
+          {% else %}
+          <div
+            class="h-20 w-20 rounded-lg bg-green-100 flex items-center justify-center"
+          >
+            <i class="bi bi-capsule text-green-600 text-2xl"></i>
+          </div>
+          {% endif %}
+          <div class="flex-1">
+            {{ form.foto }} {% if form.foto.errors %}
+            <p class="text-red-500 text-sm mt-1">{{ form.foto.errors.0 }}</p>
+            {% endif %}
+            <p class="text-sm text-gray-500 mt-1">
+              Formatos permitidos: JPG, PNG. Tamaño máximo: 5MB
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones -->
+      <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+        <a
+          href="{% if object %}{% url 'core:medicamento_detail' object.pk %}{% else %}{% url 'core:medicamento_list' %}{% endif %}"
+          class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md"
+        >
+          Cancelar
+        </a>
+        <button
+          type="submit"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+        >
+          {% if object %}
+          <i class="bi bi-check-circle mr-2"></i>
+          Actualizar Medicamento {% else %}
+          <i class="bi bi-plus-circle mr-2"></i>
+          Crear Medicamento {% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Validación de stock en tiempo real
+  document.addEventListener("DOMContentLoaded", function () {
+    const cantidadInput = document.getElementById(
+      "{{ form.cantidad.id_for_label }}"
+    );
+    if (cantidadInput) {
+      cantidadInput.addEventListener("input", function () {
+        const cantidad = parseInt(this.value);
+        const container = this.parentElement;
+
+        // Remover alertas previas
+        const existingAlert = container.querySelector(".stock-alert");
+        if (existingAlert) {
+          existingAlert.remove();
+        }
+
+        // Agregar alerta si el stock es bajo
+        if (cantidad < 10 && cantidad >= 0) {
+          const alertDiv = document.createElement("div");
+          alertDiv.className = "stock-alert text-sm mt-1";
+
+          if (cantidad < 5) {
+            alertDiv.className += " text-red-600";
+            alertDiv.innerHTML =
+              '<i class="bi bi-exclamation-triangle mr-1"></i>Stock crítico';
+          } else {
+            alertDiv.className += " text-yellow-600";
+            alertDiv.innerHTML =
+              '<i class="bi bi-exclamation-circle mr-1"></i>Stock bajo';
+          }
+
+          container.appendChild(alertDiv);
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

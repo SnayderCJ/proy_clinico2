@@ -1,0 +1,147 @@
+{% extends 'base.html' %} {% load static %} {% block title %} {% if object
+%}Editar Tipo de Medicamento{% else %}Nuevo Tipo de Medicamento{% endif %} {%
+endblock %} {% block content %}
+<div class="container mx-auto px-4 py-6">
+  <!-- Header -->
+  <div class="flex items-center mb-6">
+    <a
+      href="{% url 'core:tipo_medicamento_list' %}"
+      class="text-gray-600 hover:text-gray-900 mr-4"
+    >
+      <i class="bi bi-arrow-left text-xl"></i>
+    </a>
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">
+        {% if object %}Editar Tipo de Medicamento{% else %}Nuevo Tipo de
+        Medicamento{% endif %}
+      </h1>
+      {% if object %}
+      <p class="text-gray-600 mt-1">{{ object.nombre }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Formulario -->
+  <div class="bg-white rounded-lg shadow-sm p-6">
+    <form method="post" class="space-y-6">
+      {% csrf_token %}
+
+      <!-- Información del Tipo -->
+      <div class="border-b border-gray-200 pb-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">
+          Información del Tipo de Medicamento
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label
+              for="{{ form.nombre.id_for_label }}"
+              class="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Nombre del Tipo *
+            </label>
+            {{ form.nombre }} {% if form.nombre.errors %}
+            <p class="text-red-500 text-sm mt-1">{{ form.nombre.errors.0 }}</p>
+            {% endif %}
+            <p class="text-sm text-gray-500 mt-1">
+              Ejemplo: Analgésico, Antibiótico, Antiinflamatorio
+            </p>
+          </div>
+          <div class="flex items-center">
+            <div class="flex items-center h-5">{{ form.activo }}</div>
+            <div class="ml-3 text-sm">
+              <label
+                for="{{ form.activo.id_for_label }}"
+                class="font-medium text-gray-700"
+              >
+                Tipo activo
+              </label>
+              <p class="text-gray-500">
+                Marcar si el tipo está disponible para uso
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Descripción -->
+      <div>
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Descripción</h3>
+        <div>
+          <label
+            for="{{ form.descripcion.id_for_label }}"
+            class="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Descripción del Tipo
+          </label>
+          {{ form.descripcion }} {% if form.descripcion.errors %}
+          <p class="text-red-500 text-sm mt-1">
+            {{ form.descripcion.errors.0 }}
+          </p>
+          {% endif %}
+          <p class="text-sm text-gray-500 mt-1">
+            Información adicional sobre este tipo de medicamento (opcional)
+          </p>
+        </div>
+      </div>
+
+      <!-- Información Adicional -->
+      {% if object %}
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex items-start">
+          <i class="bi bi-info-circle text-blue-600 text-xl mr-3 mt-1"></i>
+          <div>
+            <h3 class="text-blue-900 font-medium">Información del Tipo</h3>
+            <p class="text-blue-700 mt-1">
+              Este tipo de medicamento tiene {{
+              object.medicamentos_por_tipo.count }} medicamento(s) asociado(s).
+              {% if object.medicamentos_por_tipo.count > 0 %} Si desactiva este
+              tipo, los medicamentos asociados no se verán afectados. {% endif
+              %}
+            </p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Botones -->
+      <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+        <a
+          href="{% url 'core:tipo_medicamento_list' %}"
+          class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md"
+        >
+          Cancelar
+        </a>
+        <button
+          type="submit"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+        >
+          {% if object %}
+          <i class="bi bi-check-circle mr-2"></i>
+          Actualizar Tipo {% else %}
+          <i class="bi bi-plus-circle mr-2"></i>
+          Crear Tipo {% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Convertir a título el nombre del tipo
+  document.addEventListener("DOMContentLoaded", function () {
+    const nombreInput = document.getElementById(
+      "{{ form.nombre.id_for_label }}"
+    );
+    if (nombreInput) {
+      nombreInput.addEventListener("blur", function () {
+        // Convertir la primera letra de cada palabra a mayúscula
+        const words = this.value.toLowerCase().split(" ");
+        const titleCase = words
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+        this.value = titleCase;
+      });
+    }
+  });
+</script>
+{% endblock %}

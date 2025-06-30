@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Gastos Mensuales{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Gestión de Gastos Mensuales</h1>
+            <p class="text-gray-600 mt-1">Total de gastos registrados: {{ total_gastos }}</p>
+        </div>
+        <a href="{% url 'core:gasto_create' %}" 
+           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
+            <i class="bi bi-plus-circle mr-2"></i>
+            Nuevo Gasto
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+                <input type="text" name="search" value="{{ search }}" 
+                       placeholder="Tipo de gasto, observación..."
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Gasto</label>
+                <select name="tipo_gasto" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <option value="">Todos</option>
+                    {% for tipo in tipos_gasto %}
+                        <option value="{{ tipo.id }}" {% if tipo.id|stringformat:"s" == tipo_gasto_selected %}selected{% endif %}>
+                            {{ tipo.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Mes/Año</label>
+                <input type="month" name="fecha_mes" value="{{ fecha_mes_selected }}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md mr-2">
+                    <i class="bi bi-search mr-1"></i>
+                    Filtrar
+                </button>
+                <a href="{% url 'core:gasto_list' %}" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md">
+                    Limpiar
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Resumen de Gastos -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow-sm p-4">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="bi bi-currency-dollar text-green-600 text-2xl"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-500">Total Gastos</p>
+                    <p class="text-lg font-semibold text-gray-900">${{ total_valor_gastos|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-4">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="bi bi-calendar-month text-blue-600 text-2xl"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-500">Este Mes</p>
+                    <p class="text-lg font-semibold text-gray-900">${{ gastos_mes_actual|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-4">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="bi bi-graph-up text-purple-600 text-2xl"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-500">Promedio Mensual</p>
+                    <p class="text-lg font-semibold text-gray-900">${{ promedio_mensual|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-4">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="bi bi-receipt text-orange-600 text-2xl"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-500">Total Registros</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ total_gastos }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Gastos -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        {% if gastos %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Fecha
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Tipo de Gasto
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Valor
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Observación
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Acciones
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for gasto in gastos %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        <div class="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
+                                            <i class="bi bi-calendar-date text-red-600"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ gasto.fecha|date:"d/m/Y" }}
+                                        </div>
+                                        <div class="text-sm text-gray-500">
+                                            {{ gasto.fecha|date:"F Y" }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900">{{ gasto.tipo_gasto.nombre }}</div>
+                                {% if gasto.tipo_gasto.descripcion %}
+                                <div class="text-sm text-gray-500">{{ gasto.tipo_gasto.descripcion|truncatechars:40 }}</div>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-semibold text-gray-900">${{ gasto.valor }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900">
+                                    {% if gasto.observacion %}
+                                        {{ gasto.observacion|truncatechars:50 }}
+                                    {% else %}
+                                        <span class="text-gray-400">Sin observaciones</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div class="flex space-x-2">
+                                    <a href="{% url 'core:gasto_detail' gasto.pk %}" 
+                                       class="text-blue-600 hover:text-blue-900" title="Ver detalles">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'core:gasto_update' gasto.pk %}" 
+                                       class="text-green-600 hover:text-green-900" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'core:gasto_delete' gasto.pk %}" 
+                                       class="text-red-600 hover:text-red-900" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            {% if is_paginated %}
+            <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Anterior
+                        </a>
+                    {% endif %}
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Siguiente
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Mostrando
+                            <span class="font-medium">{{ page_obj.start_index }}</span>
+                            a
+                            <span class="font-medium">{{ page_obj.end_index }}</span>
+                            de
+                            <span class="font-medium">{{ page_obj.paginator.count }}</span>
+                            resultados
+                        </p>
+                    </div>
+                    {% include 'components/pagination.html' %}
+                </div>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-12">
+                <i class="bi bi-receipt text-gray-400 text-6xl mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No hay gastos registrados</h3>
+                <p class="text-gray-500 mb-4">Comience registrando los gastos del consultorio.</p>
+                <a href="{% url 'core:gasto_create' %}" 
+                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                    <i class="bi bi-plus-circle mr-2"></i>
+                    Registrar Gasto
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

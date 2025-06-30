@@ -1,0 +1,260 @@
+{% extends 'base.html' %} {% load static %} {% block title %}Detalle del Gasto -
+{{ gasto.tipo_gasto.nombre }}{% endblock %} {% block content %}
+<div class="container mx-auto px-4 py-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center">
+      <a
+        href="{% url 'core:gasto_list' %}"
+        class="text-gray-600 hover:text-gray-900 mr-4"
+      >
+        <i class="bi bi-arrow-left text-xl"></i>
+      </a>
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">
+          {{ gasto.tipo_gasto.nombre }}
+        </h1>
+        <p class="text-gray-600 mt-1">
+          Gasto del {{ gasto.fecha|date:"d/m/Y" }}
+        </p>
+      </div>
+    </div>
+    <div class="flex space-x-2">
+      <a
+        href="{% url 'core:gasto_update' gasto.pk %}"
+        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center"
+      >
+        <i class="bi bi-pencil mr-2"></i>
+        Editar
+      </a>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Información Principal -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- Información del Gasto -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+          Información del Gasto
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Tipo de Gasto</label
+            >
+            <p class="text-gray-900 text-lg">
+              <i class="bi bi-tag mr-2"></i>
+              {{ gasto.tipo_gasto.nombre }}
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Fecha del Gasto</label
+            >
+            <p class="text-gray-900 text-lg">
+              <i class="bi bi-calendar-date mr-2"></i>
+              {{ gasto.fecha|date:"d/m/Y" }}
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-500"
+              >Mes/Año</label
+            >
+            <p class="text-gray-900">
+              <i class="bi bi-calendar-month mr-2"></i>
+              {{ gasto.fecha|date:"F Y" }}
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-500">Valor</label>
+            <p class="text-gray-900 text-2xl font-bold text-red-600">
+              <i class="bi bi-currency-dollar mr-2"></i>
+              ${{ gasto.valor }}
+            </p>
+          </div>
+        </div>
+
+        {% if gasto.tipo_gasto.descripcion %}
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-gray-500"
+            >Descripción del Tipo</label
+          >
+          <p class="text-gray-900">{{ gasto.tipo_gasto.descripcion }}</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Observaciones -->
+      {% if gasto.observacion %}
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Observaciones</h2>
+        <div class="prose max-w-none">
+          <p class="text-gray-700 whitespace-pre-line">
+            {{ gasto.observacion }}
+          </p>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Información Contextual -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+          Contexto del Gasto
+        </h2>
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div class="flex items-start">
+            <i class="bi bi-info-circle text-blue-600 text-xl mr-3 mt-1"></i>
+            <div>
+              <h3 class="text-blue-900 font-medium">
+                Sobre este tipo de gasto
+              </h3>
+              <p class="text-blue-700 mt-1">
+                {% if gasto.tipo_gasto.descripcion %} {{
+                gasto.tipo_gasto.descripcion }} {% else %} Este gasto
+                corresponde a {{ gasto.tipo_gasto.nombre|lower }} del
+                consultorio médico. {% endif %}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+      <!-- Icono del Gasto -->
+      <div class="bg-white rounded-lg shadow-sm p-6 text-center">
+        <div
+          class="w-32 h-32 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4"
+        >
+          <i class="bi bi-receipt text-red-600 text-4xl"></i>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900">
+          {{ gasto.tipo_gasto.nombre }}
+        </h3>
+        <p class="text-gray-500">Gasto Operativo</p>
+        <p class="text-2xl font-bold text-red-600 mt-2">${{ gasto.valor }}</p>
+      </div>
+
+      <!-- Información Rápida -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          Información Rápida
+        </h3>
+        <div class="space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Fecha</span>
+            <span class="font-semibold text-blue-600"
+              >{{ gasto.fecha|date:"d/m/Y" }}</span
+            >
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Mes</span>
+            <span class="font-semibold text-green-600"
+              >{{ gasto.fecha|date:"M Y" }}</span
+            >
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Valor</span>
+            <span class="font-semibold text-red-600">${{ gasto.valor }}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Observaciones</span>
+            {% if gasto.observacion %}
+            <span class="font-semibold text-purple-600">Sí</span>
+            {% else %}
+            <span class="font-semibold text-gray-600">No</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Estadísticas del Tipo -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          Estadísticas del Tipo
+        </h3>
+        <div class="space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Total Gastos</span>
+            <span class="font-semibold text-blue-600"
+              >{{ gastos_mismo_tipo }}</span
+            >
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Total Valor</span>
+            <span class="font-semibold text-green-600"
+              >${{ total_valor_tipo|floatformat:2 }}</span
+            >
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">Promedio</span>
+            <span class="font-semibold text-purple-600"
+              >${{ promedio_tipo|floatformat:2 }}</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Acciones Rápidas -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          Acciones Rápidas
+        </h3>
+        <div class="space-y-2">
+          <a
+            href="{% url 'core:gasto_update' gasto.pk %}"
+            class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center"
+          >
+            <i class="bi bi-pencil mr-2"></i>
+            Editar Gasto
+          </a>
+          <a
+            href="{% url 'core:gasto_delete' gasto.pk %}"
+            class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center"
+          >
+            <i class="bi bi-trash mr-2"></i>
+            Eliminar Gasto
+          </a>
+          <a
+            href="{% url 'core:gasto_create' %}"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center"
+          >
+            <i class="bi bi-plus-circle mr-2"></i>
+            Nuevo Gasto
+          </a>
+          <a
+            href="{% url 'core:gasto_list' %}"
+            class="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center"
+          >
+            <i class="bi bi-list mr-2"></i>
+            Ver Todos los Gastos
+          </a>
+        </div>
+      </div>
+
+      <!-- Información Adicional -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          Información Adicional
+        </h3>
+        <div class="text-sm text-gray-600 space-y-2">
+          <p>
+            <i class="bi bi-calendar mr-2"></i>
+            Registrado el {{ gasto.fecha|date:"d/m/Y" }}
+          </p>
+          <p>
+            <i class="bi bi-building mr-2"></i>
+            Gasto operativo del consultorio
+          </p>
+          <p>
+            <i class="bi bi-graph-up mr-2"></i>
+            Contribuye al control financiero
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

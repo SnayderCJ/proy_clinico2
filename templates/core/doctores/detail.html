@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ doctor.nombre_completo }} - Detalles del Doctor{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center">
+            <a href="{% url 'core:doctor_list' %}" class="text-gray-600 hover:text-gray-900 mr-4">
+                <i class="bi bi-arrow-left text-xl"></i>
+            </a>
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">{{ doctor.nombre_completo }}</h1>
+                <p class="text-gray-600 mt-1">Información del Doctor</p>
+            </div>
+        </div>
+        <div class="flex space-x-2">
+            <a href="{% url 'core:doctor_update' doctor.pk %}" 
+               class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center">
+                <i class="bi bi-pencil mr-2"></i>
+                Editar
+            </a>
+            <a href="{% url 'doctor:calendario_citas' %}?doctor={{ doctor.pk }}" 
+               class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
+                <i class="bi bi-calendar-plus mr-2"></i>
+                Ver Agenda
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Información Principal -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Datos Personales -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Información Personal</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Nombres</label>
+                        <p class="text-gray-900">{{ doctor.nombres }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Apellidos</label>
+                        <p class="text-gray-900">{{ doctor.apellidos }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">RUC</label>
+                        <p class="text-gray-900">{{ doctor.ruc }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Código Único</label>
+                        <p class="text-gray-900">{{ doctor.codigo_unico_doctor }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Especialidades -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Especialidades Médicas</h2>
+                {% if doctor.especialidad.exists %}
+                    <div class="flex flex-wrap gap-2">
+                        {% for especialidad in doctor.especialidad.all %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                <i class="bi bi-heart-pulse mr-2"></i>
+                                {{ especialidad.nombre }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-500">No tiene especialidades asignadas</p>
+                {% endif %}
+            </div>
+
+            <!-- Información de Contacto -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Información de Contacto</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Teléfono</label>
+                        <p class="text-gray-900">
+                            <i class="bi bi-telephone mr-2"></i>
+                            {{ doctor.telefono }}
+                        </p>
+                    </div>
+                    {% if doctor.email %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Email</label>
+                        <p class="text-gray-900">
+                            <i class="bi bi-envelope mr-2"></i>
+                            {{ doctor.email }}
+                        </p>
+                    </div>
+                    {% endif %}
+                    {% if doctor.direccion %}
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-500">Dirección</label>
+                        <p class="text-gray-900">
+                            <i class="bi bi-geo-alt mr-2"></i>
+                            {{ doctor.direccion }}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Información Profesional -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Información Profesional</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% if doctor.horario_atencion %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Horario de Atención</label>
+                        <p class="text-gray-900">
+                            <i class="bi bi-clock mr-2"></i>
+                            {{ doctor.horario_atencion }}
+                        </p>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Estado</label>
+                        {% if doctor.activo %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                <i class="bi bi-check-circle mr-1"></i>
+                                Activo
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                                <i class="bi bi-x-circle mr-1"></i>
+                                Inactivo
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Foto del Doctor -->
+            <div class="bg-white rounded-lg shadow-sm p-6 text-center">
+                {% if doctor.get_image %}
+                    <img src="{{ doctor.get_image }}" alt="{{ doctor.nombre_completo }}" 
+                         class="w-32 h-32 rounded-full mx-auto object-cover mb-4">
+                {% else %}
+                    <div class="w-32 h-32 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
+                        <i class="bi bi-person-badge text-blue-600 text-4xl"></i>
+                    </div>
+                {% endif %}
+                <h3 class="text-lg font-medium text-gray-900">{{ doctor.nombre_completo }}</h3>
+                <p class="text-gray-500">Doctor</p>
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Estadísticas</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Total Atenciones</span>
+                        <span class="font-semibold text-blue-600">{{ total_atenciones }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Citas Programadas</span>
+                        <span class="font-semibold text-green-600">{{ citas_programadas }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Especialidades</span>
+                        <span class="font-semibold text-purple-600">{{ doctor.especialidad.count }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Atenciones Recientes -->
+            {% if atenciones_recientes %}
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Atenciones Recientes</h3>
+                <div class="space-y-3">
+                    {% for atencion in atenciones_recientes %}
+                    <div class="border-l-4 border-blue-500 pl-3">
+                        <p class="text-sm font-medium text-gray-900">{{ atencion.paciente.nombre_completo }}</p>
+                        <p class="text-xs text-gray-500">{{ atencion.fecha_atencion|date:"d/m/Y H:i" }}</p>
+                        <p class="text-xs text-gray-600">{{ atencion.motivo_consulta|truncatechars:50 }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'doctor:atencion_list' %}?doctor={{ doctor.pk }}" 
+                       class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                        Ver todas las atenciones →
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Acciones Rápidas -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Acciones Rápidas</h3>
+                <div class="space-y-2">
+                    <a href="{% url 'doctor:atencion_create' %}?doctor={{ doctor.pk }}" 
+                       class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center">
+                        <i class="bi bi-plus-circle mr-2"></i>
+                        Nueva Atención
+                    </a>
+                    <a href="{% url 'doctor:calendario_citas' %}?doctor={{ doctor.pk }}" 
+                       class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center">
+                        <i class="bi bi-calendar-plus mr-2"></i>
+                        Agendar Cita
+                    </a>
+                    <a href="{% url 'core:doctor_update' doctor.pk %}" 
+                       class="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm flex items-center justify-center">
+                        <i class="bi bi-pencil mr-2"></i>
+                        Editar Información
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
