@@ -46,5 +46,4 @@ urlpatterns = [
   # rutas de autenticacion
   path('logout/', signout, name='signout'),
   path('signin/', signin, name='signin'),
-  #path('signup/', signup, name='signup'),
 ]

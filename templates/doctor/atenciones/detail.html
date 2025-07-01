@@ -1,0 +1,237 @@
+{% extends 'home.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Encabezado -->
+    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+        <div class="flex justify-between items-start">
+            <div class="flex items-center space-x-4">
+                <div class="w-16 h-16 rounded-full overflow-hidden bg-gray-200">
+                    <img src="{{ atencion.paciente.get_image }}" alt="Foto del paciente" class="w-full h-full object-cover">
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ atencion.paciente.nombres }} {{ atencion.paciente.apellidos }}</h1>
+                    <p class="text-gray-600">CI: {{ atencion.paciente.cedula_ecuatoriana|default:atencion.paciente.dni }}</p>
+                    <p class="text-sm text-gray-500">Atención #{{ atencion.id }} - {{ atencion.fecha_atencion|date:"d/m/Y H:i" }}</p>
+                </div>
+            </div>
+            <div class="flex space-x-3">
+                {% if permissions.change_atencion %}
+                <a href="{% url 'doctor:atencion_update' atencion.id %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-edit mr-2"></i>Editar
+                </a>
+                {% endif %}
+                <a href="{{ back_url }}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>Volver
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Columna Principal -->
+        <div class="lg:col-span-2 space-y-8">
+            <!-- Evaluación Clínica -->
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-stethoscope text-emerald-600 mr-3"></i>
+                    Evaluación Clínica
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-emerald-50 p-4 rounded-xl">
+                        <h3 class="font-semibold text-emerald-800 mb-2">Motivo de Consulta</h3>
+                        <p class="text-emerald-700">{{ atencion.motivo_consulta }}</p>
+                    </div>
+                    
+                    <div class="bg-blue-50 p-4 rounded-xl">
+                        <h3 class="font-semibold text-blue-800 mb-2">Síntomas</h3>
+                        <p class="text-blue-700">{{ atencion.sintomas }}</p>
+                    </div>
+                </div>
+
+                {% if atencion.examen_fisico %}
+                <div class="mt-6 bg-purple-50 p-4 rounded-xl">
+                    <h3 class="font-semibold text-purple-800 mb-2">Examen Físico</h3>
+                    <p class="text-purple-700">{{ atencion.examen_fisico }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Diagnósticos -->
+                <div class="mt-6">
+                    <h3 class="font-semibold text-gray-800 mb-3">Diagnósticos</h3>
+                    <div class="flex flex-wrap gap-2">
+                        {% for diagnostico in atencion.diagnostico.all %}
+                        <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm">
+                            {{ diagnostico.codigo }} - {{ diagnostico.descripcion }}
+                        </span>
+                        {% empty %}
+                        <span class="text-gray-500 italic">No se registraron diagnósticos</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Plan Terapéutico -->
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-clipboard-list text-blue-600 mr-3"></i>
+                    Plan Terapéutico
+                </h2>
+
+                <div class="space-y-6">
+                    <div class="bg-blue-50 p-4 rounded-xl">
+                        <h3 class="font-semibold text-blue-800 mb-2">Plan de Tratamiento</h3>
+                        <p class="text-blue-700">{{ atencion.tratamiento }}</p>
+                    </div>
+
+                    {% if atencion.examenes_enviados %}
+                    <div class="bg-yellow-50 p-4 rounded-xl">
+                        <h3 class="font-semibold text-yellow-800 mb-2">Exámenes Solicitados</h3>
+                        <p class="text-yellow-700">{{ atencion.examenes_enviados }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if atencion.comentario_adicional %}
+                    <div class="bg-gray-50 p-4 rounded-xl">
+                        <h3 class="font-semibold text-gray-800 mb-2">Comentario Adicional</h3>
+                        <p class="text-gray-700">{{ atencion.comentario_adicional }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Medicamentos -->
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-pills text-red-600 mr-3"></i>
+                    Medicamentos Prescritos
+                </h2>
+
+                <div class="space-y-4">
+                    {% for detalle in medicamentos_prescritos %}
+                    <div class="bg-red-50 p-4 rounded-xl">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-semibold text-red-800">{{ detalle.medicamento.nombre }}</h3>
+                                <p class="text-sm text-red-600">{{ detalle.medicamento.concentracion }}</p>
+                                <p class="text-sm text-red-700 mt-2">{{ detalle.prescripcion }}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="bg-red-200 text-red-800 px-3 py-1 rounded-full text-sm">
+                                    Cantidad: {{ detalle.cantidad }}
+                                </span>
+                                {% if detalle.duracion_tratamiento %}
+                                <p class="text-sm text-red-600 mt-2">Duración: {{ detalle.duracion_tratamiento }} días</p>
+                                {% endif %}
+                                {% if detalle.frecuencia_diaria %}
+                                <p class="text-sm text-red-600">Frecuencia: {{ detalle.frecuencia_diaria }}x al día</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 italic text-center">No se prescribieron medicamentos</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Lateral -->
+        <div class="lg:col-span-1 space-y-8">
+            <!-- Signos Vitales -->
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-heartbeat text-red-600 mr-3"></i>
+                    Signos Vitales
+                </h2>
+
+                <div class="space-y-4">
+                    {% if atencion.presion_arterial %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Presión Arterial:</span>
+                        <span class="font-semibold text-gray-900">{{ atencion.presion_arterial }}</span>
+                    </div>
+                    {% endif %}
+
+                    {% if atencion.pulso %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Pulso:</span>
+                        <span class="font-semibold text-gray-900">{{ atencion.pulso }} ppm</span>
+                    </div>
+                    {% endif %}
+
+                    {% if atencion.temperatura %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Temperatura:</span>
+                        <span class="font-semibold text-gray-900">{{ atencion.temperatura }}°C</span>
+                    </div>
+                    {% endif %}
+
+                    {% if atencion.frecuencia_respiratoria %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Freq. Respiratoria:</span>
+                        <span class="font-semibold text-gray-900">{{ atencion.frecuencia_respiratoria }} rpm</span>
+                    </div>
+                    {% endif %}
+
+                    {% if atencion.saturacion_oxigeno %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Saturación O2:</span>
+                        <span class="font-semibold text-gray-900">{{ atencion.saturacion_oxigeno }}%</span>
+                    </div>
+                    {% endif %}
+
+                    {% if atencion.peso %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Peso:</span>
+                        <span class="font-semibold text-gray-900">{{ atencion.peso }} kg</span>
+                    </div>
+                    {% endif %}
+
+                    {% if atencion.altura %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Altura:</span>
+                        <span class="font-semibold text-gray-900">{{ atencion.altura }} m</span>
+                    </div>
+                    {% endif %}
+
+                    {% if atencion.calcular_imc %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">IMC:</span>
+                        <span class="font-semibold text-gray-900">{{ atencion.calcular_imc }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Resumen -->
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <h2 class="text-xl font-bold text-gray-900 mb-6">Resumen</h2>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-emerald-50 p-4 rounded-xl text-center">
+                        <span class="text-2xl font-bold text-emerald-700">{{ total_diagnosticos }}</span>
+                        <p class="text-sm text-emerald-600">Diagnósticos</p>
+                    </div>
+                    
+                    <div class="bg-blue-50 p-4 rounded-xl text-center">
+                        <span class="text-2xl font-bold text-blue-700">{{ total_medicamentos }}</span>
+                        <p class="text-sm text-blue-600">Medicamentos</p>
+                    </div>
+                </div>
+
+                {% if atencion.es_control %}
+                <div class="mt-4 bg-purple-50 p-4 rounded-xl text-center">
+                    <p class="text-purple-700">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        Consulta de Control
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

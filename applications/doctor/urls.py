@@ -1,7 +1,7 @@
 from django.urls import path
 from applications.doctor.views import calendario_mejorado, pagos
 from applications.doctor.views.atencion_medica import (
-    AtencionListView, AtencionCreateView, AtencionUpdateView, AtencionDeleteView
+    AtencionListView, AtencionCreateView, AtencionUpdateView, AtencionDeleteView, AtencionDetailView
 )
 
 app_name = 'doctor'
@@ -27,6 +27,7 @@ urlpatterns = [
     # Atenciones médicas
     path('atenciones/', AtencionListView.as_view(), name='atencion_list'),
     path('atenciones/crear/', AtencionCreateView.as_view(), name='atencion_create'),
+    path('atenciones/<int:pk>/', AtencionDetailView.as_view(), name='atencion_detail'),
     path('atenciones/editar/<int:pk>/', AtencionUpdateView.as_view(), name='atencion_update'),
     path('atenciones/eliminar/<int:pk>/', AtencionDeleteView.as_view(), name='atencion_delete'),
 ]

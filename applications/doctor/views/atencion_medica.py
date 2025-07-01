@@ -17,7 +17,7 @@ from applications.security.components.mixin_crud import (
     PermissionMixin,
     UpdateViewMixin,
 )
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.db.models import Q
 
 
@@ -330,6 +330,34 @@ class AtencionUpdateView(PermissionMixin, UpdateViewMixin, UpdateView):
             return JsonResponse(
                 {"msg": f"Error al actualizar la atención médica: {str(e)}"}, status=500
             )
+
+
+class AtencionDetailView(PermissionMixin, DetailView):
+    model = Atencion
+    template_name = "doctor/atenciones/detail.html"
+    context_object_name = "atencion"
+    permission_required = "view_atencion"
+
+    def get_queryset(self):
+        return self.model.objects.select_related('paciente', 'paciente__tipo_sangre').prefetch_related(
+            'diagnostico', 'detalles__medicamento', 'detalles__medicamento__tipo', 
+            'detalles__medicamento__marca_medicamento'
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["back_url"] = reverse_lazy("doctor:atencion_list")
+        
+        # Obtener medicamentos prescritos
+        context["medicamentos_prescritos"] = self.object.detalles.select_related(
+            'medicamento', 'medicamento__tipo', 'medicamento__marca_medicamento'
+        ).all()
+        
+        # Calcular totales
+        context["total_medicamentos"] = self.object.detalles.count()
+        context["total_diagnosticos"] = self.object.diagnostico.count()
+        
+        return context
 
 
 class AtencionDeleteView(PermissionMixin, DeleteViewMixin, DeleteView):

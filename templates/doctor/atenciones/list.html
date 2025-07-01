@@ -60,7 +60,7 @@
                                             {{ atencion.paciente.nombres }} {{ atencion.paciente.apellidos }}
                                         </span>
                                         <span class="text-xs text-gray-500 dark:text-gray-400">
-                                            {{ atencion.paciente.numero_identificacion }}
+                                            CI: {{ atencion.paciente.cedula_ecuatoriana|default:atencion.paciente.dni|default:"Sin documento" }}
                                         </span>
                                     </div>
                                 </td>
@@ -127,7 +127,7 @@
                                 <td class="px-4 py-4">
                                     <div class="flex justify-center space-x-2">
                                         {% if permissions.view_atencion %}
-                                        <a href="#"
+                                        <a href="{% url 'doctor:atencion_detail' atencion.id %}"
                                             class="text-emerald-600 dark:text-emerald-500 hover:text-emerald-800 p-1 rounded transition-colors"
                                             title="Ver Detalle">
                                             <i class="fa-solid fa-eye text-lg"></i>

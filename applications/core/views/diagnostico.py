@@ -1,5 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.db.models import Q
@@ -94,6 +94,34 @@ class DiagnosticoUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
             "Error al actualizar el diagnóstico. Verifique los datos ingresados."
         )
         return super().form_invalid(form)
+
+
+class DiagnosticoDetailView(PermissionMixin, LoginRequiredMixin, DetailView):
+    """Vista para mostrar detalles completos de un diagnóstico"""
+    
+    model = Diagnostico
+    template_name = "core/diagnosticos/detail.html"
+    context_object_name = "diagnostico"
+    permission_required = "view_diagnostico"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        diagnostico = self.get_object()
+        
+        # Obtener estadísticas de uso del diagnóstico
+        try:
+            from applications.doctor.models import Atencion
+            context["total_atenciones"] = Atencion.objects.filter(diagnostico=diagnostico).count()
+            context["atenciones_recientes"] = (
+                Atencion.objects.filter(diagnostico=diagnostico)
+                .select_related('paciente')
+                .order_by('-fecha_atencion')[:5]
+            )
+        except:
+            context["total_atenciones"] = 0
+            context["atenciones_recientes"] = []
+        
+        return context
 
 
 class DiagnosticoDeleteView(PermissionMixin, LoginRequiredMixin, DeleteView):

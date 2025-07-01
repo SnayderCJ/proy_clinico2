@@ -285,18 +285,32 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                             <div class="bg-blue-50 p-2 rounded-xl border-l-4 border-blue-400 md:col-span-2">
                                 <h3 class="font-semibold text-blue-800 mb-2">Paciente</h3>
-                                <p id="paciente-nombre2" class="text-blue-700 text-lg">Vera, Erick</p>
+                                <p id="paciente-nombre2" class="text-blue-700 text-lg">
+                                    {% if atencion.paciente %}
+                                        {{ atencion.paciente.nombres }} {{ atencion.paciente.apellidos }}
+                                    {% else %}
+                                        Seleccione un paciente
+                                    {% endif %}
+                                </p>
                                 <!-- Campo oculto para capturar ID del paciente -->
-                                <input  id="id_paciente">
+                                <input type="hidden" id="id_paciente" value="{% if atencion.paciente %}{{ atencion.paciente.id }}{% endif %}">
                             </div>
-                            <div class="bg-green-50 p-2 rounded-xl border-l-4 border-green-400 text-center ">
+                            <div class="bg-green-50 p-2 rounded-xl border-l-4 border-green-400 text-center">
                                  <div id="paciente-avatar2" class="w-24 h-24 rounded-full overflow-hidden mx-auto">
-                                    <img id="paciente-foto2" src="" alt="Foto del paciente" class="w-full h-full object-cover">
-
+                                    <img id="paciente-foto2" 
+                                         src="{% if atencion.paciente %}{{ atencion.paciente.get_image }}{% else %}{% static 'img/usuario_anonimo.png' %}{% endif %}" 
+                                         alt="Foto del paciente" 
+                                         class="w-full h-full object-cover">
                                 </div>
-                                 <span id="paciente-edad2" class="text-blue-800 text-1xl font-bold">Edad</span>
+                                 <span id="paciente-edad2" class="text-blue-800 text-1xl font-bold">
+                                    {% if atencion.paciente %}
+                                        {{ atencion.paciente.edad }} años
+                                    {% else %}
+                                        Edad
+                                    {% endif %}
+                                 </span>
                                 <!-- Campo oculto para capturar ID del doctor -->
-                                <input type="hidden" id="id_doctor" value="1">
+                                <input type="hidden" id="id_doctor" value="{{ user.id }}">
                             </div>
 
                         </div>

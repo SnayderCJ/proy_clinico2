@@ -1,7 +1,8 @@
 
 import os
-from datetime import date
+from datetime import date, timedelta
 from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
 from django.db import models
 from applications.core.utils.medicamento import ViaAdministracion
 from applications.core.utils.paciente import EstadoCivilChoices, SexoChoices
@@ -195,6 +196,30 @@ class Paciente(models.Model):
             edad -= 1
         return edad
 
+    def clean(self):
+        """Validaciones personalizadas para el modelo Paciente"""
+        super().clean()
+        
+        # Validar que la fecha de nacimiento no sea en el futuro
+        if self.fecha_nacimiento and self.fecha_nacimiento > date.today():
+            raise ValidationError({
+                'fecha_nacimiento': 'La fecha de nacimiento no puede ser en el futuro.'
+            })
+        
+        # Validar que la fecha de nacimiento no sea muy antigua (más de 120 años)
+        if self.fecha_nacimiento and self.fecha_nacimiento < date.today() - timedelta(days=120*365):
+            raise ValidationError({
+                'fecha_nacimiento': 'La fecha de nacimiento no puede ser mayor a 120 años.'
+            })
+        
+        # Validar que el teléfono contenga solo números, espacios, guiones y paréntesis
+        if self.telefono:
+            import re
+            if not re.match(r'^[\d\s\-\(\)\+,]+$', self.telefono):
+                raise ValidationError({
+                    'telefono': 'El teléfono solo puede contener números, espacios, guiones, paréntesis y comas.'
+                })
+
     @staticmethod
     def cantidad_pacientes():
         return Paciente.objects.count()
@@ -346,6 +371,38 @@ class Doctor(models.Model):
     @property
     def nombre_completo(self):
         return f"{self.apellidos} {self.nombres}"
+
+    def clean(self):
+        """Validaciones personalizadas para el modelo Doctor"""
+        super().clean()
+        
+        # Validar que la fecha de nacimiento no sea en el futuro
+        if self.fecha_nacimiento and self.fecha_nacimiento > date.today():
+            raise ValidationError({
+                'fecha_nacimiento': 'La fecha de nacimiento no puede ser en el futuro.'
+            })
+        
+        # Validar edad mínima (debe ser mayor de 23 años para ser doctor)
+        if self.fecha_nacimiento:
+            edad = (date.today() - self.fecha_nacimiento).days // 365
+            if edad < 23:
+                raise ValidationError({
+                    'fecha_nacimiento': 'El doctor debe tener al menos 23 años.'
+                })
+        
+        # Validar duración de atención (entre 15 y 120 minutos)
+        if self.duracion_atencion < 15 or self.duracion_atencion > 120:
+            raise ValidationError({
+                'duracion_atencion': 'La duración de la atención debe estar entre 15 y 120 minutos.'
+            })
+        
+        # Validar formato de teléfono
+        if self.telefonos:
+            import re
+            if not re.match(r'^[\d\s\-\(\)\+,]+$', self.telefonos):
+                raise ValidationError({
+                    'telefonos': 'El teléfono solo puede contener números, espacios, guiones, paréntesis y comas.'
+                })
 
     def __str__(self):
         return self.nombre_completo

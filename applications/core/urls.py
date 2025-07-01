@@ -25,7 +25,7 @@ from applications.core.views.medicamento import (
     MedicamentoListView, MedicamentoCreateView, MedicamentoUpdateView, MedicamentoDeleteView, MedicamentoDetailView
 )
 from applications.core.views.diagnostico import (
-    DiagnosticoListView, DiagnosticoCreateView, DiagnosticoUpdateView, DiagnosticoDeleteView
+    DiagnosticoListView, DiagnosticoCreateView, DiagnosticoUpdateView, DiagnosticoDeleteView, DiagnosticoDetailView
 )
 from applications.core.views.gasto import (
     TipoGastoListView, TipoGastoCreateView, TipoGastoUpdateView, TipoGastoDeleteView,
@@ -121,6 +121,7 @@ urlpatterns = [
     # ============================================================================
     path('diagnosticos/', DiagnosticoListView.as_view(), name="diagnostico_list"),
     path('diagnosticos/crear/', DiagnosticoCreateView.as_view(), name="diagnostico_create"),
+    path('diagnosticos/<int:pk>/', DiagnosticoDetailView.as_view(), name="diagnostico_detail"),
     path('diagnosticos/<int:pk>/editar/', DiagnosticoUpdateView.as_view(), name="diagnostico_update"),
     path('diagnosticos/<int:pk>/eliminar/', DiagnosticoDeleteView.as_view(), name="diagnostico_delete"),
     
