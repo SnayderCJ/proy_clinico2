@@ -251,7 +251,7 @@
 <script>
     function confirmDelete(gmpId, assignmentName) {
         document.getElementById("assignmentName").textContent = assignmentName;
-        document.getElementById("deleteForm").action = `/auth/group_module_permission_delete/${gmpId}/`;
+        document.getElementById("deleteForm").action = `/security/group_module_permission_delete/${gmpId}/`;
         document.getElementById("deleteModal").classList.remove("hidden");
     }
 
