@@ -1,5 +1,8 @@
-{% extends 'base.html' %} {% load static %} {% block title %} {% if object
-%}Editar Tipo de Sangre{% else %}Nuevo Tipo de Sangre{% endif %} {% endblock %}
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  {% if object %}Editar Tipo de Sangre{% else %}Nuevo Tipo de Sangre{% endif %}
+{% endblock %}
 {% block content %}
 <div class="container mx-auto px-4 py-6">
   <!-- Header -->
@@ -12,8 +15,7 @@
     </a>
     <div>
       <h1 class="text-3xl font-bold text-gray-900">
-        {% if object %}Editar Tipo de Sangre{% else %}Nuevo Tipo de Sangre{%
-        endif %}
+        {% if object %}Editar Tipo de Sangre{% else %}Nuevo Tipo de Sangre{% endif %}
       </h1>
       {% if object %}
       <p class="text-gray-600 mt-1">{{ object.tipo }}</p>
@@ -73,10 +75,12 @@
           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
         >
           {% if object %}
-          <i class="bi bi-check-circle mr-2"></i>
-          Actualizar Tipo {% else %}
-          <i class="bi bi-plus-circle mr-2"></i>
-          Crear Tipo {% endif %}
+            <i class="bi bi-check-circle mr-2"></i>
+            Actualizar Tipo
+          {% else %}
+            <i class="bi bi-plus-circle mr-2"></i>
+            Crear Tipo
+          {% endif %}
         </button>
       </div>
     </form>
@@ -91,11 +95,23 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
       <div>
         <span class="font-medium text-blue-800">Pacientes con este tipo:</span>
-        <span class="text-blue-700">{{ object.tipos_sangre.count }}</span>
+        <span class="text-blue-700">
+          {% if object.tipos_sangre %}
+            {{ object.tipos_sangre.count }}
+          {% else %}
+            0
+          {% endif %}
+        </span>
       </div>
       <div>
         <span class="font-medium text-blue-800">Fecha de creación:</span>
-        <span class="text-blue-700">{{ object.id|date:"d/m/Y" }}</span>
+        <span class="text-blue-700">
+          {% if object.created_at %}
+            {{ object.created_at|date:"d/m/Y" }}
+          {% else %}
+            No disponible
+          {% endif %}
+        </span>
       </div>
     </div>
   </div>

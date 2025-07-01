@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Gastos Mensuales{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">Gastos Mensuales</h1>
+      <p class="text-gray-600 mt-1">Registro y control de gastos por período</p>
+    </div>
+    <a
+      href="{% url 'core:gasto_mensual_create' %}"
+      class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center"
+    >
+      <i class="bi bi-plus-circle mr-2"></i>
+      Registrar Gasto
+    </a>
+  </div>
+
+  <!-- Estadísticas -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-blue-50 rounded-lg p-4">
+      <div class="flex items-center">
+        <i class="bi bi-receipt text-blue-600 text-2xl mr-3"></i>
+        <div>
+          <p class="text-blue-600 text-sm font-medium">Total Gastos</p>
+          <p class="text-blue-900 text-2xl font-bold">{{ total_gastos }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-green-50 rounded-lg p-4">
+      <div class="flex items-center">
+        <i class="bi bi-calendar-month text-green-600 text-2xl mr-3"></i>
+        <div>
+          <p class="text-green-600 text-sm font-medium">Este Mes</p>
+          <p class="text-green-900 text-2xl font-bold">${{ total_mes_actual|floatformat:2 }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-purple-50 rounded-lg p-4">
+      <div class="flex items-center">
+        <i class="bi bi-calendar-year text-purple-600 text-2xl mr-3"></i>
+        <div>
+          <p class="text-purple-600 text-sm font-medium">Este Año</p>
+          <p class="text-purple-900 text-2xl font-bold">${{ total_año_actual|floatformat:2 }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+    <form method="GET" class="flex flex-wrap gap-4 items-end">
+      <div class="flex-1 min-w-64">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+        <input
+          type="text"
+          name="search"
+          value="{{ search }}"
+          placeholder="Buscar por tipo de gasto u observación..."
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Gasto</label>
+        <select
+          name="tipo_gasto"
+          class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Todos los tipos</option>
+          {% for tipo in tipos_gasto %}
+          <option value="{{ tipo.id }}" {% if tipo_gasto_selected == tipo.id|stringformat:"s" %}selected{% endif %}>
+            {{ tipo.nombre }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Año</label>
+        <select
+          name="año"
+          class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Todos los años</option>
+          {% for año in años_disponibles %}
+          <option value="{{ año }}" {% if año_selected == año|stringformat:"s" %}selected{% endif %}>
+            {{ año }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Mes</label>
+        <select
+          name="mes"
+          class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Todos los meses</option>
+          {% for numero, nombre in meses %}
+          <option value="{{ numero }}" {% if mes_selected == numero|stringformat:"s" %}selected{% endif %}>
+            {{ nombre }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <button
+        type="submit"
+        class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md"
+      >
+        Filtrar
+      </button>
+      <a
+        href="{% url 'core:gasto_mensual_list' %}"
+        class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md"
+      >
+        Limpiar
+      </a>
+    </form>
+  </div>
+
+  <!-- Lista -->
+  <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+    {% if gastos_mensuales %}
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Fecha
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Tipo de Gasto
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Valor
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Observación
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Acciones
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {% for gasto in gastos_mensuales %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-gray-900">
+                {{ gasto.fecha|date:"d/m/Y" }}
+              </div>
+              <div class="text-sm text-gray-500">
+                {{ gasto.fecha|date:"l" }}
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-gray-900">{{ gasto.tipo_gasto.nombre }}</div>
+              {% if gasto.tipo_gasto.descripcion %}
+              <div class="text-sm text-gray-500">{{ gasto.tipo_gasto.descripcion|truncatechars:30 }}</div>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-bold text-red-600">${{ gasto.valor|floatformat:2 }}</div>
+            </td>
+            <td class="px-6 py-4">
+              <div class="text-sm text-gray-600">
+                {{ gasto.observacion|default:"Sin observaciones"|truncatechars:50 }}
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+              <div class="flex space-x-2">
+                <a
+                  href="{% url 'core:gasto_mensual_update' gasto.pk %}"
+                  class="text-blue-600 hover:text-blue-900"
+                  title="Editar"
+                >
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <a
+                  href="{% url 'core:gasto_mensual_delete' gasto.pk %}"
+                  class="text-red-600 hover:text-red-900"
+                  title="Eliminar"
+                >
+                  <i class="bi bi-trash"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación -->
+    {% if is_paginated %}
+    <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+      {% include 'components/pagination.html' %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="text-center py-12">
+      <i class="bi bi-receipt text-gray-400 text-4xl mb-4"></i>
+      <h3 class="text-lg font-medium text-gray-900 mb-2">No hay gastos registrados</h3>
+      <p class="text-gray-500 mb-4">Comience registrando un nuevo gasto mensual.</p>
+      <a
+        href="{% url 'core:gasto_mensual_create' %}"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md inline-flex items-center"
+      >
+        <i class="bi bi-plus-circle mr-2"></i>
+        Registrar Primer Gasto
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

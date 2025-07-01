@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+{% if object %}Editar Gasto Mensual{% else %}Nuevo Gasto Mensual{% endif %}
+{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+  <!-- Header -->
+  <div class="flex items-center mb-6">
+    <a
+      href="{% url 'core:gasto_mensual_list' %}"
+      class="text-gray-600 hover:text-gray-900 mr-4"
+    >
+      <i class="bi bi-arrow-left text-xl"></i>
+    </a>
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">
+        {% if object %}Editar Gasto Mensual{% else %}Nuevo Gasto Mensual{% endif %}
+      </h1>
+      {% if object %}
+      <p class="text-gray-600 mt-1">{{ object.tipo_gasto.nombre }} - ${{ object.valor }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Formulario -->
+  <div class="bg-white rounded-lg shadow-sm p-6">
+    <form method="post" class="space-y-6">
+      {% csrf_token %}
+
+      <!-- Información del Gasto -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label
+            for="{{ form.tipo_gasto.id_for_label }}"
+            class="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Tipo de Gasto *
+          </label>
+          {{ form.tipo_gasto }}
+          {% if form.tipo_gasto.errors %}
+          <p class="text-red-500 text-sm mt-1">{{ form.tipo_gasto.errors.0 }}</p>
+          {% endif %}
+          <p class="text-sm text-gray-500 mt-1">
+            Seleccione la categoría del gasto
+          </p>
+        </div>
+        <div>
+          <label
+            for="{{ form.valor.id_for_label }}"
+            class="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Valor del Gasto *
+          </label>
+          {{ form.valor }}
+          {% if form.valor.errors %}
+          <p class="text-red-500 text-sm mt-1">{{ form.valor.errors.0 }}</p>
+          {% endif %}
+          <p class="text-sm text-gray-500 mt-1">
+            Ingrese el monto en dólares
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <label
+          for="{{ form.fecha.id_for_label }}"
+          class="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Fecha del Gasto *
+        </label>
+        {{ form.fecha }}
+        {% if form.fecha.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ form.fecha.errors.0 }}</p>
+        {% endif %}
+        <p class="text-sm text-gray-500 mt-1">
+          Fecha en que se realizó el gasto
+        </p>
+      </div>
+
+      <div>
+        <label
+          for="{{ form.observacion.id_for_label }}"
+          class="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Observaciones
+        </label>
+        {{ form.observacion }}
+        {% if form.observacion.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ form.observacion.errors.0 }}</p>
+        {% endif %}
+        <p class="text-sm text-gray-500 mt-1">
+          Detalles adicionales sobre el gasto (opcional)
+        </p>
+      </div>
+
+      <!-- Botones -->
+      <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+        <a
+          href="{% url 'core:gasto_mensual_list' %}"
+          class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md"
+        >
+          Cancelar
+        </a>
+        <button
+          type="submit"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+        >
+          {% if object %}
+            <i class="bi bi-check-circle mr-2"></i>
+            Actualizar Gasto
+          {% else %}
+            <i class="bi bi-plus-circle mr-2"></i>
+            Registrar Gasto
+          {% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Información adicional si es edición -->
+  {% if object %}
+  <div class="bg-red-50 rounded-lg p-4 mt-6">
+    <h3 class="text-lg font-medium text-red-900 mb-2">
+      Información del Gasto
+    </h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+      <div>
+        <span class="font-medium text-red-800">Fecha de registro:</span>
+        <span class="text-red-700">{{ object.fecha|date:"d/m/Y" }}</span>
+      </div>
+      <div>
+        <span class="font-medium text-red-800">Tipo:</span>
+        <span class="text-red-700">{{ object.tipo_gasto.nombre }}</span>
+      </div>
+      <div>
+        <span class="font-medium text-red-800">ID:</span>
+        <span class="text-red-700">#{{ object.id }}</span>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  // Validación de valor en tiempo real
+  document.addEventListener("DOMContentLoaded", function () {
+    const valorInput = document.getElementById("{{ form.valor.id_for_label }}");
+    if (valorInput) {
+      valorInput.addEventListener("input", function () {
+        const valor = parseFloat(this.value);
+        const container = this.parentElement;
+
+        // Remover alertas previas
+        const existingAlert = container.querySelector(".valor-alert");
+        if (existingAlert) {
+          existingAlert.remove();
+        }
+
+        // Agregar alerta si el valor es muy alto
+        if (valor > 1000) {
+          const alertDiv = document.createElement("div");
+          alertDiv.className = "valor-alert text-sm mt-1 text-yellow-600";
+          alertDiv.innerHTML = '<i class="bi bi-exclamation-triangle mr-1"></i>Valor alto - Verifique el monto';
+          container.appendChild(alertDiv);
+        }
+      });
+    }
+
+    // Establecer fecha actual por defecto si es nuevo registro
+    const fechaInput = document.getElementById("{{ form.fecha.id_for_label }}");
+    if (fechaInput && !fechaInput.value) {
+      const today = new Date().toISOString().split('T')[0];
+      fechaInput.value = today;
+    }
+  });
+</script>
+{% endblock %}

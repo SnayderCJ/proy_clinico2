@@ -1,6 +1,7 @@
-{% extends 'base.html' %} {% load static %} {% block title %} {% if object
-%}Editar Medicamento{% else %}Nuevo Medicamento{% endif %} {% endblock %} {%
-block content %}
+{% extends 'base.html' %} {% load static %} 
+{% block title %} {% if object %}Editar Medicamento{% else %}Nuevo Medicamento{% endif %} 
+{% endblock %} 
+{% block content %}
 <div class="container mx-auto px-4 py-6">
   <!-- Header -->
   <div class="flex items-center mb-6">
@@ -113,8 +114,8 @@ block content %}
             >
               Vía de Administración *
             </label>
-            {{ form.via_administracion }} {% if form.via_administracion.errors
-            %}
+            {{ form.via_administracion }} 
+            {% if form.via_administracion.errors %}
             <p class="text-red-500 text-sm mt-1">
               {{ form.via_administracion.errors.0 }}
             </p>
