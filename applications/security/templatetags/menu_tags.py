@@ -13,8 +13,9 @@ def show_user_menu(context):
     request = context["request"]
     user = request.user
 
-    if not user.is_authenticated:
-        return {"menus": []}
+    # Verificar que el usuario esté autenticado y sea válido
+    if not user or not hasattr(user, 'is_authenticated') or not user.is_authenticated:
+        return {"menus": [], "user": None, "current_url": request.path}
 
     # Obtener el grupo activo del usuario
     group_id = request.session.get("group_id")
@@ -24,7 +25,7 @@ def show_user_menu(context):
         request.session["group_id"] = group_id
 
     if not group_id:
-        return {"menus": []}
+        return {"menus": [], "user": user, "current_url": request.path}
 
     # Obtener módulos permitidos para el grupo
     group_modules = (
@@ -76,15 +77,22 @@ def get_user_role_name(user):
     """
     Obtiene el nombre del rol principal del usuario
     """
-    if not user.is_authenticated:
+    # Verificar si user es None o es un string
+    if user is None or isinstance(user, str):
         return "Invitado"
 
-    if user.is_superuser:
-        return "Super Administrador"
+    try:
+        if not user.is_authenticated:
+            return "Invitado"
 
-    # Obtener el primer grupo del usuario
-    first_group = user.groups.first()
-    if first_group:
-        return first_group.name
+        if user.is_superuser:
+            return "Super Administrador"
 
-    return "Sin Rol"
+        # Obtener el primer grupo del usuario
+        first_group = user.groups.first()
+        if first_group:
+            return first_group.name
+
+        return "Sin Rol"
+    except AttributeError:
+        return "Invitado"
