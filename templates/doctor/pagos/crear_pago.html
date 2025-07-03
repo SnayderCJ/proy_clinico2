@@ -174,18 +174,179 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- PayPal SDK -->
-<script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD"></script>
-
 <script>
 let pagoCreado = null;
 let metodoPagoSeleccionado = null;
+let paypalButtonsRendered = false;
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
     actualizarResumen();
+    
+    // Cargar PayPal SDK dinámicamente
+    loadPayPalSDK();
 });
+
+function loadPayPalSDK() {
+    // Verificar si PayPal ya está cargado
+    if (window.paypal) {
+        initializePayPal();
+        return;
+    }
+    
+    // Crear script de PayPal
+    const script = document.createElement('script');
+    script.src = `https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD&intent=capture&debug=true`;
+    script.onload = function() {
+        console.log('PayPal SDK cargado exitosamente');
+        initializePayPal();
+    };
+    script.onerror = function() {
+        console.error('Error cargando PayPal SDK');
+        showError('Error cargando PayPal. Por favor, recargue la página.');
+    };
+    document.head.appendChild(script);
+}
+
+function initializePayPal() {
+    if (!window.paypal) {
+        console.error('PayPal SDK no disponible');
+        return;
+    }
+    
+    try {
+        // Configuración de PayPal
+        window.paypal.Buttons({
+            style: {
+                layout: 'vertical',
+                color: 'blue',
+                shape: 'rect',
+                label: 'paypal'
+            },
+            createOrder: async function(data, actions) {
+                try {
+                    // Validar que hay servicios seleccionados
+                    const resumen = actualizarResumen();
+                    if (resumen.servicios.length === 0) {
+                        throw new Error('Por favor seleccione al menos un servicio');
+                    }
+                    
+                    if (resumen.total <= 0) {
+                        throw new Error('El monto total debe ser mayor a 0');
+                    }
+                    
+                    // Mostrar loading
+                    showLoading('Creando orden de pago...');
+                    
+                    // Crear el pago en nuestro sistema
+                    await crearPago();
+                    if (!pagoCreado) {
+                        throw new Error('Error creando el pago en el sistema');
+                    }
+                    
+                    hideLoading();
+                    
+                    // Crear orden de PayPal
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: {
+                                value: resumen.total.toFixed(2),
+                                currency_code: 'USD'
+                            },
+                            description: `Servicios Médicos - Pago #${pagoCreado.pago_id}`,
+                            custom_id: pagoCreado.pago_id.toString()
+                        }],
+                        application_context: {
+                            brand_name: 'Centro Médico',
+                            locale: 'es_ES',
+                            landing_page: 'LOGIN',
+                            user_action: 'PAY_NOW'
+                        }
+                    });
+                } catch (error) {
+                    hideLoading();
+                    console.error('Error en createOrder:', error);
+                    showError('Error: ' + error.message);
+                    throw error;
+                }
+            },
+            onApprove: async function(data, actions) {
+                try {
+                    showLoading('Procesando pago...');
+                    
+                    // Capturar el pago
+                    const order = await actions.order.capture();
+                    console.log('Orden capturada:', order);
+                    
+                    // Procesar el pago en nuestro sistema
+                    const response = await fetch('/doctor/api/procesar-pago-paypal/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({
+                            pago_id: pagoCreado.pago_id,
+                            paypal_order_id: order.id,
+                            paypal_payer_id: order.payer.payer_id
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    hideLoading();
+                    
+                    if (result.success) {
+                        showSuccess('¡Pago procesado exitosamente!');
+                        setTimeout(() => {
+                            window.location.href = `/doctor/pagos/${pagoCreado.pago_id}/`;
+                        }, 2000);
+                    } else {
+                        throw new Error(result.error || 'Error procesando el pago');
+                    }
+                } catch (error) {
+                    hideLoading();
+                    console.error('Error en onApprove:', error);
+                    showError('Error procesando el pago: ' + error.message);
+                }
+            },
+            onCancel: async function(data) {
+                console.log('Pago cancelado por el usuario');
+                if (pagoCreado) {
+                    try {
+                        await fetch('/doctor/api/cancelar-pago-paypal/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken')
+                            },
+                            body: JSON.stringify({
+                                pago_id: pagoCreado.pago_id
+                            })
+                        });
+                    } catch (error) {
+                        console.error('Error cancelando pago:', error);
+                    }
+                }
+                showInfo('Pago cancelado');
+            },
+            onError: function(err) {
+                console.error('Error PayPal:', err);
+                hideLoading();
+                showError('Error procesando el pago con PayPal. Por favor, inténtelo de nuevo.');
+            }
+        }).render('#paypal-button-container').then(() => {
+            paypalButtonsRendered = true;
+            console.log('Botones de PayPal renderizados exitosamente');
+        }).catch((error) => {
+            console.error('Error renderizando botones de PayPal:', error);
+            showError('Error inicializando PayPal. Por favor, recargue la página.');
+        });
+    } catch (error) {
+        console.error('Error inicializando PayPal:', error);
+        showError('Error configurando PayPal. Por favor, recargue la página.');
+    }
+}
 
 function initializeEventListeners() {
     // Servicios checkboxes
@@ -204,6 +365,7 @@ function initializeEventListeners() {
     // Campos de cantidad y descuento
     document.querySelectorAll('.servicio-detalles input[type="number"]').forEach(input => {
         input.addEventListener('change', actualizarResumen);
+        input.addEventListener('input', actualizarResumen);
     });
 
     // Checkbox de seguro
@@ -228,12 +390,18 @@ function initializeEventListeners() {
             
             // Mostrar/ocultar botones de PayPal
             const paypalContainer = document.getElementById('paypal-button-container');
+            const btnPagar = document.getElementById('btnPagar');
+            
             if (metodoPagoSeleccionado === 'paypal') {
-                paypalContainer.classList.remove('hidden');
-                document.getElementById('btnPagar').classList.add('hidden');
+                if (paypalButtonsRendered) {
+                    paypalContainer.classList.remove('hidden');
+                    btnPagar.classList.add('hidden');
+                } else {
+                    showInfo('Cargando PayPal...');
+                }
             } else {
                 paypalContainer.classList.add('hidden');
-                document.getElementById('btnPagar').classList.remove('hidden');
+                btnPagar.classList.remove('hidden');
             }
         });
     });
@@ -241,13 +409,20 @@ function initializeEventListeners() {
     // Formulario de pago
     document.getElementById('formPago').addEventListener('submit', async function(e) {
         e.preventDefault();
+        
         if (!metodoPagoSeleccionado) {
-            alert('Por favor seleccione un método de pago');
+            showError('Por favor seleccione un método de pago');
             return;
         }
         
         if (metodoPagoSeleccionado !== 'paypal') {
             await crearPago();
+            if (pagoCreado && metodoPagoSeleccionado === 'efectivo') {
+                showSuccess('Pago registrado exitosamente');
+                setTimeout(() => {
+                    window.location.href = `/doctor/pagos/${pagoCreado.pago_id}/`;
+                }, 1500);
+            }
         }
     });
 }
@@ -262,6 +437,7 @@ function actualizarResumen() {
         const detalles = servicioItem.querySelector('.servicio-detalles');
         const nombre = checkbox.dataset.nombre;
         const precioBase = parseFloat(checkbox.dataset.precio);
+        const servicioId = checkbox.value;
         
         // Obtener cantidad y descuento
         const cantidad = parseInt(detalles.querySelector('input[type="number"]').value) || 1;
@@ -272,6 +448,7 @@ function actualizarResumen() {
         const subtotal = precioConDescuento * cantidad;
         
         serviciosSeleccionados.push({
+            id: servicioId,
             nombre: nombre,
             cantidad: cantidad,
             precio_unitario: precioBase,
@@ -301,8 +478,7 @@ function actualizarResumen() {
 async function crearPago() {
     const resumen = actualizarResumen();
     if (resumen.servicios.length === 0) {
-        alert('Por favor seleccione al menos un servicio');
-        return;
+        throw new Error('Por favor seleccione al menos un servicio');
     }
     
     const data = {
@@ -331,94 +507,79 @@ async function crearPago() {
         
         if (result.success) {
             pagoCreado = result;
-            alert('Pago creado exitosamente');
-            if (metodoPagoSeleccionado === 'efectivo') {
-                window.location.href = `/doctor/pagos/${result.pago_id}/`;
-            }
+            console.log('Pago creado:', pagoCreado);
+            return result;
         } else {
-            alert('Error: ' + result.error);
+            throw new Error(result.error || 'Error creando el pago');
         }
     } catch (error) {
         console.error('Error creando pago:', error);
-        alert('Error al crear el pago');
+        throw error;
     }
 }
 
-// Configuración de PayPal
-paypal.Buttons({
-    createOrder: async function(data, actions) {
-        // Primero crear el pago en nuestro sistema
-        await crearPago();
-        if (!pagoCreado) {
-            throw new Error('Error creando el pago');
-        }
-        
-        const resumen = actualizarResumen();
-        
-        return actions.order.create({
-            purchase_units: [{
-                amount: {
-                    value: resumen.total.toFixed(2)
-                },
-                description: 'Servicios Médicos'
-            }]
-        });
-    },
-    onApprove: async function(data, actions) {
-        const order = await actions.order.capture();
-        
-        // Procesar el pago en nuestro sistema
-        try {
-            const response = await fetch('/doctor/api/procesar-pago-paypal/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({
-                    pago_id: pagoCreado.pago_id,
-                    paypal_order_id: order.id,
-                    paypal_payer_id: order.payer.payer_id
-                })
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                alert('Pago procesado exitosamente');
-                window.location.href = `/doctor/pagos/${pagoCreado.pago_id}/`;
-            } else {
-                alert('Error procesando el pago: ' + result.error);
-            }
-        } catch (error) {
-            console.error('Error procesando pago:', error);
-            alert('Error al procesar el pago');
-        }
-    },
-    onCancel: async function(data) {
-        if (pagoCreado) {
-            try {
-                await fetch('/doctor/api/cancelar-pago-paypal/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
-                    body: JSON.stringify({
-                        pago_id: pagoCreado.pago_id
-                    })
-                });
-            } catch (error) {
-                console.error('Error cancelando pago:', error);
-            }
-        }
-        alert('Pago cancelado');
-    },
-    onError: function(err) {
-        console.error('Error PayPal:', err);
-        alert('Error procesando el pago con PayPal');
+// Funciones de UI
+function showLoading(message = 'Cargando...') {
+    // Crear overlay si no existe
+    let overlay = document.getElementById('loading-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'loading-overlay';
+        overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        overlay.innerHTML = `
+            <div class="bg-white rounded-lg p-6 flex items-center space-x-3">
+                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                <span id="loading-message">${message}</span>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    } else {
+        document.getElementById('loading-message').textContent = message;
+        overlay.classList.remove('hidden');
     }
-}).render('#paypal-button-container');
+}
+
+function hideLoading() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+        overlay.classList.add('hidden');
+    }
+}
+
+function showError(message) {
+    showNotification(message, 'error');
+}
+
+function showSuccess(message) {
+    showNotification(message, 'success');
+}
+
+function showInfo(message) {
+    showNotification(message, 'info');
+}
+
+function showNotification(message, type = 'info') {
+    // Remover notificaciones existentes
+    const existing = document.querySelectorAll('.notification');
+    existing.forEach(n => n.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `notification fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 max-w-sm ${
+        type === 'error' ? 'bg-red-500 text-white' :
+        type === 'success' ? 'bg-green-500 text-white' :
+        'bg-blue-500 text-white'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remover después de 5 segundos
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
 
 // Función auxiliar para obtener CSRF token
 function getCookie(name) {

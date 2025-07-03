@@ -6,6 +6,15 @@ from applications.doctor.utils.doctor import DiaSemanaChoices
 from applications.doctor.utils.pago import MetodoPagoChoices, EstadoPagoChoices
 
 class HorarioAtencion(models.Model):
+    # Relación con el doctor
+    doctor = models.ForeignKey(
+        'core.Doctor',
+        on_delete=models.CASCADE,
+        verbose_name="Doctor",
+        related_name="horarios_atencion",
+        help_text="Doctor al que pertenece este horario de atención."
+    )
+
     # Día de la semana (ej: lunes, martes...)
     dia_semana = models.CharField(
         max_length=10,
@@ -23,13 +32,105 @@ class HorarioAtencion(models.Model):
 
     activo = models.BooleanField(default=True, verbose_name="Activo")
 
+
     def __str__(self):
-        return f"{self.dia_semana}"
+        return f"{self.doctor.nombre_completo} - {self.get_dia_semana_display()}"
+
+    @classmethod
+    def generar_horarios_automaticos(cls, doctor, horarios_data):
+        """
+        Genera horarios automáticamente para un doctor basado en los datos proporcionados.
+        
+        Args:
+            doctor: Instancia del modelo Doctor
+            horarios_data: Lista de diccionarios con datos de horarios
+                          [{'dia_semana': 'lunes', 'hora_inicio': '08:00', 'hora_fin': '17:00', ...}]
+        
+        Returns:
+            Lista de instancias HorarioAtencion creadas
+        """
+        horarios_creados = []
+        
+        # Eliminar horarios existentes del doctor
+        cls.objects.filter(doctor=doctor).delete()
+        
+        for horario_data in horarios_data:
+            if horario_data.get('activo', False):
+                horario = cls.objects.create(
+                    doctor=doctor,
+                    dia_semana=horario_data['dia_semana'],
+                    hora_inicio=horario_data['hora_inicio'],
+                    hora_fin=horario_data['hora_fin'],
+                    intervalo_desde=horario_data.get('intervalo_desde'),
+                    intervalo_hasta=horario_data.get('intervalo_hasta'),
+                    activo=horario_data.get('activo', True)
+                )
+                horarios_creados.append(horario)
+        
+        return horarios_creados
+
+    @property
+    def duracion_total_horas(self):
+        """Calcula la duración total del horario en horas, excluyendo descansos."""
+        if not self.hora_inicio or not self.hora_fin:
+            return 0
+        
+        from datetime import datetime, timedelta
+        
+        # Calcular duración total
+        inicio = datetime.combine(datetime.today(), self.hora_inicio)
+        fin = datetime.combine(datetime.today(), self.hora_fin)
+        duracion_total = fin - inicio
+        
+        # Restar tiempo de descanso si existe
+        if self.intervalo_desde and self.intervalo_hasta:
+            descanso_inicio = datetime.combine(datetime.today(), self.intervalo_desde)
+            descanso_fin = datetime.combine(datetime.today(), self.intervalo_hasta)
+            duracion_descanso = descanso_fin - descanso_inicio
+            duracion_total -= duracion_descanso
+        
+        return round(duracion_total.total_seconds() / 3600, 2)
+
+    @property
+    def slots_disponibles(self):
+        """Calcula el número de slots de citas disponibles basado en la duración de atención del doctor."""
+        if not self.doctor or not self.doctor.duracion_atencion:
+            return 0
+        
+        duracion_horas = self.duracion_total_horas
+        duracion_cita_horas = self.doctor.duracion_atencion / 60  # Convertir minutos a horas
+        
+        return int(duracion_horas / duracion_cita_horas) if duracion_cita_horas > 0 else 0
+
+    def clean(self):
+        """Validaciones personalizadas del modelo."""
+        from django.core.exceptions import ValidationError
+        
+        # Validar que hora_fin sea posterior a hora_inicio
+        if self.hora_inicio and self.hora_fin and self.hora_inicio >= self.hora_fin:
+            raise ValidationError({
+                'hora_fin': 'La hora de fin debe ser posterior a la hora de inicio.'
+            })
+        
+        # Validar intervalos de descanso
+        if self.intervalo_desde and self.intervalo_hasta:
+            if self.intervalo_desde >= self.intervalo_hasta:
+                raise ValidationError({
+                    'intervalo_hasta': 'La hora de fin del descanso debe ser posterior a la hora de inicio.'
+                })
+            
+            # Validar que el descanso esté dentro del horario de atención
+            if self.hora_inicio and self.hora_fin:
+                if not (self.hora_inicio <= self.intervalo_desde < self.intervalo_hasta <= self.hora_fin):
+                    raise ValidationError({
+                        'intervalo_desde': 'El descanso debe estar dentro del horario de atención.'
+                    })
 
     class Meta:
         verbose_name = "Horario de Atención"
         verbose_name_plural = "Horarios de Atención"
-        unique_together = ('dia_semana', 'hora_inicio', 'hora_fin')  # Evita duplicados exactos
+        unique_together = ('doctor', 'dia_semana')  # Un doctor solo puede tener un horario por día
+        ordering = ['doctor', 'dia_semana', 'hora_inicio']
 
 class CitaMedica(models.Model):
     paciente = models.ForeignKey('core.Paciente', on_delete=models.CASCADE, verbose_name="Paciente", related_name="citas")

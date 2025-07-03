@@ -9,7 +9,8 @@ from django.utils import timezone
 
 from applications.core.models import Paciente, Medicamento, Diagnostico
 from applications.doctor.forms.atencion import AtencionForm
-from applications.doctor.models import Atencion, DetalleAtencion
+from applications.doctor.models import Atencion, DetalleAtencion, Pago, DetallePago, ServiciosAdicionales
+from applications.doctor.utils.pago import EstadoPagoChoices, MetodoPagoChoices
 from applications.security.components.mixin_crud import (
     CreateViewMixin,
     DeleteViewMixin,
@@ -141,6 +142,9 @@ class AtencionCreateView(PermissionMixin, CreateViewMixin, CreateView):
                         frecuencia_diaria=to_int(medicamento.get("frecuencia")),
                     )
 
+                # Crear pago pendiente automáticamente
+                crear_pago_pendiente(atencion)
+
                 # Mensaje de éxito
                 messages.success(
                     request, f"Éxito al registrar la atención médica #{atencion.id}"
@@ -153,6 +157,7 @@ class AtencionCreateView(PermissionMixin, CreateViewMixin, CreateView):
                         "id": atencion.id,
                         "fecha": atencion.fecha_atencion.strftime("%Y-%m-%d %H:%M:%S"),
                         "paciente": str(atencion.paciente),
+                        "pago_generado": True,
                     },
                     status=200,
                 )
@@ -384,6 +389,39 @@ class AtencionDeleteView(PermissionMixin, DeleteViewMixin, DeleteView):
         )
         return response
 
+
+def crear_pago_pendiente(atencion):
+    """Crear un pago pendiente automáticamente al crear una atención"""
+    try:
+        # Obtener el servicio de consulta médica
+        servicio_consulta = ServiciosAdicionales.objects.get(nombre_servicio="Consulta Médica")
+        
+        # Crear el pago
+        pago = Pago.objects.create(
+            atencion=atencion,
+            metodo_pago=MetodoPagoChoices.EFECTIVO,  # Por defecto efectivo
+            monto_total=Decimal('0.00'),  # Se calculará después
+            estado=EstadoPagoChoices.PENDIENTE,
+            nombre_pagador=f"{atencion.paciente.nombres} {atencion.paciente.apellidos}",
+            observaciones="Pago generado automáticamente por atención médica"
+        )
+
+        # Crear el detalle del pago con el servicio de consulta
+        DetallePago.objects.create(
+            pago=pago,
+            servicio_adicional=servicio_consulta,
+            cantidad=1,
+            precio_unitario=servicio_consulta.costo_servicio,
+            descuento_porcentaje=Decimal('0')
+        )
+
+        # El subtotal se calcula automáticamente en el modelo DetallePago
+        # y el monto_total se actualiza automáticamente
+
+        return pago
+    except Exception as e:
+        print(f"Error al crear pago pendiente: {str(e)}")
+        return None
 
 def obtener_contexto_paciente(id_paciente):
     try:

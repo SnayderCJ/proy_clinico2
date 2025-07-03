@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load horario_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="flex items-center mb-6">
+        <a href="{% url 'doctor:horario_list' %}" class="text-gray-600 hover:text-gray-900 mr-4">
+            <i class="bi bi-arrow-left text-xl"></i>
+        </a>
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
+            <p class="text-gray-600 mt-1">Configure los horarios de atención para cada día de la semana</p>
+        </div>
+    </div>
+
+    <!-- Información -->
+    <div class="bg-blue-50 rounded-lg p-4 mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="bi bi-info-circle text-blue-600 text-xl"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-blue-800">Instrucciones</h3>
+                <div class="mt-2 text-sm text-blue-700">
+                    <p>Configure los horarios de atención para cada día de la semana. Active el día marcando el checkbox y complete los horarios. Los intervalos de descanso son opcionales.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <form method="post" id="horarioForm" class="space-y-6">
+        {% csrf_token %}
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {% for dia_key, dia_label in dias_semana %}
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden" id="card-{{ dia_key }}">
+                <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-gray-900">
+                            <i class="bi bi-calendar-day text-blue-600 mr-2"></i>
+                            {{ dia_label }}
+                        </h3>
+                        <div class="flex items-center">
+                            {% get_form_field form dia_key|add:"_activo" as activo_field %}
+                            {{ activo_field }}
+                            <label for="{{ activo_field.id_for_label }}" class="ml-2 text-sm font-medium text-gray-700">
+                                Activo
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-4 space-y-4" id="content-{{ dia_key }}">
+                    <!-- Horario Principal -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-900 mb-3">
+                            <i class="bi bi-clock text-blue-600 mr-1"></i>
+                            Horario Principal
+                        </h4>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Hora Inicio</label>
+                                {% get_form_field form dia_key|add:"_hora_inicio" as inicio_field %}
+                                {{ inicio_field }}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Hora Fin</label>
+                                {% get_form_field form dia_key|add:"_hora_fin" as fin_field %}
+                                {{ fin_field }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Intervalo de Descanso -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-900 mb-3">
+                            <i class="bi bi-cup-hot text-orange-600 mr-1"></i>
+                            Descanso (Opcional)
+                        </h4>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Desde</label>
+                                {% get_form_field form dia_key|add:"_intervalo_desde" as desde_field %}
+                                {{ desde_field }}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Hasta</label>
+                                {% get_form_field form dia_key|add:"_intervalo_hasta" as hasta_field %}
+                                {{ hasta_field }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+            <a href="{% url 'doctor:horario_list' %}" 
+               class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md">
+                Cancelar
+            </a>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
+                <i class="bi bi-check-circle mr-2"></i>
+                Guardar Horarios Semanales
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+.card-inactive {
+    opacity: 0.6;
+}
+
+.card-inactive .content {
+    display: none;
+}
+
+input[type="time"] {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500;
+}
+
+input[type="checkbox"] {
+    @apply h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Manejar checkboxes de activación
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    
+    checkboxes.forEach(checkbox => {
+        const dia = checkbox.name.replace('_activo', '');
+        const card = document.getElementById(`card-${dia}`);
+        const content = document.getElementById(`content-${dia}`);
+        
+        function updateCardState() {
+            if (checkbox.checked) {
+                card.classList.remove('card-inactive');
+                content.style.display = 'block';
+                
+                // Hacer campos requeridos
+                const inputs = content.querySelectorAll('input[type="time"]');
+                inputs.forEach(input => {
+                    if (input.name.includes('hora_inicio') || input.name.includes('hora_fin')) {
+                        input.required = true;
+                    }
+                });
+            } else {
+                card.classList.add('card-inactive');
+                content.style.display = 'none';
+                
+                // Quitar requerimiento y limpiar valores
+                const inputs = content.querySelectorAll('input[type="time"]');
+                inputs.forEach(input => {
+                    input.required = false;
+                    input.value = '';
+                });
+            }
+        }
+        
+        // Estado inicial
+        updateCardState();
+        
+        // Evento de cambio
+        checkbox.addEventListener('change', updateCardState);
+    });
+    
+    // Validación del formulario
+    document.getElementById('horarioForm').addEventListener('submit', function(e) {
+        let hasActiveDay = false;
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                hasActiveDay = true;
+            }
+        });
+        
+        if (!hasActiveDay) {
+            e.preventDefault();
+            alert('Debe activar al menos un día de la semana.');
+            return false;
+        }
+        
+        // Validar horarios activos
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                const dia = checkbox.name.replace('_activo', '');
+                const horaInicio = document.querySelector(`input[name="${dia}_hora_inicio"]`);
+                const horaFin = document.querySelector(`input[name="${dia}_hora_fin"]`);
+                
+                if (!horaInicio.value || !horaFin.value) {
+                    e.preventDefault();
+                    alert(`Debe completar hora de inicio y fin para ${dia}`);
+                    return false;
+                }
+                
+                if (horaInicio.value >= horaFin.value) {
+                    e.preventDefault();
+                    alert(`La hora de fin debe ser posterior a la hora de inicio para ${dia}`);
+                    return false;
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

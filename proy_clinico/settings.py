@@ -155,6 +155,10 @@ SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Configuración de PayPal (en producción esto debería estar en variables de entorno)
-PAYPAL_CLIENT_ID = os.getenv('PAYPAL_CLIENT_ID', 'AeA1QIZXiflr1_-7Lft_F_FkPBNrSB7hxQn-CDbpqVhJn8T-G4dWkdU_-HQXPxVb-HQn-CDbpqVhJn8T')  # Cliente ID de prueba
-PAYPAL_CLIENT_SECRET = os.getenv('PAYPAL_CLIENT_SECRET', 'EL-Vh9whC7Va')
+# Para testing, usaremos el Client ID de sandbox de PayPal para desarrollo
+PAYPAL_CLIENT_ID = os.getenv('PAYPAL_CLIENT_ID', 'AZDxjDScFpQtjWTOUtWKbyN_bDt4OgqaF4eYXlewfBP4-8aqX3PiV8e1GWU6liB2CUXlkA59kJXE7M6R')
+PAYPAL_CLIENT_SECRET = os.getenv('PAYPAL_CLIENT_SECRET', 'EHtdqIkfiB1D16T_-1P4qP4_2TgaQGdHQmQqRrV5hgMQN3crfHOuTn58wBdWY7hP7iSE5A59kJXE7M6R')
 PAYPAL_MODE = os.getenv('PAYPAL_MODE', 'sandbox')  # "sandbox" para pruebas, "live" para producción
+
+# Configuración adicional para debugging
+PAYPAL_DEBUG = os.getenv('PAYPAL_DEBUG', 'True').lower() in ['true', '1', 'yes']
