@@ -51,6 +51,21 @@
         <form id="formPago" class="space-y-6">
             {% csrf_token %}
             
+            <!-- Información del Pagador -->
+            <div class="space-y-4">
+                <h3 class="text-lg font-semibold mb-3">Información del Pagador</h3>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Nombre del Pagador</label>
+                    <input type="text" id="nombrePagador" name="nombre_pagador" 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Observaciones</label>
+                    <textarea id="observaciones" name="observaciones" rows="3" 
+                              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                </div>
+            </div>
+            
             <!-- Servicios -->
             <div>
                 <h3 class="text-lg font-semibold mb-3">Servicios a Pagar</h3>
@@ -133,24 +148,10 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {% for value, label in metodos_pago %}
                     <div class="metodo-pago border rounded-lg p-4 text-center" data-metodo="{{ value }}">
-                        <i class="fas fa-{% if value == 'paypal' %}paypal text-blue-500{% elif value == 'efectivo' %}money-bill-wave text-green-500{% else %}credit-card text-purple-500{% endif %} text-2xl mb-2"></i>
+                        <i class="{% if value == 'paypal' %}fab fa-paypal text-blue-500{% elif value == 'efectivo' %}fas fa-money-bill-wave text-green-500{% else %}fas fa-credit-card text-purple-500{% endif %} text-2xl mb-2"></i>
                         <div class="font-medium">{{ label }}</div>
                     </div>
                     {% endfor %}
-                </div>
-            </div>
-
-            <!-- Información Adicional -->
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Nombre del Pagador</label>
-                    <input type="text" id="nombrePagador" name="nombre_pagador" 
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Observaciones</label>
-                    <textarea id="observaciones" name="observaciones" rows="3" 
-                              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                 </div>
             </div>
 

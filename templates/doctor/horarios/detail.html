@@ -3,271 +3,232 @@
 
 {% block title %}Detalle del Horario - {{ horario.get_dia_semana_display }}{% endblock %}
 
-{% block extra_css %}
-<style>
-    .detail-card {
-        border: none;
-        border-radius: 0.75rem;
-        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-        overflow: hidden;
-    }
-    
-    .detail-header {
-        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
-        color: white;
-        padding: 2rem;
-        text-align: center;
-    }
-    
-    .detail-header h1 {
-        margin-bottom: 0.5rem;
-        font-size: 2.5rem;
-    }
-    
-    .detail-header .subtitle {
-        opacity: 0.9;
-        font-size: 1.1rem;
-    }
-    
-    .info-section {
-        padding: 2rem;
-    }
-    
-    .info-item {
-        display: flex;
-        align-items: center;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        background: #f8f9fc;
-        border-radius: 0.5rem;
-        border-left: 4px solid #4e73df;
-    }
-    
-    .info-item i {
-        font-size: 1.5rem;
-        margin-right: 1rem;
-        width: 30px;
-        text-align: center;
-        color: #4e73df;
-    }
-    
-    .info-item .label {
-        font-weight: 600;
-        color: #5a5c69;
-        min-width: 120px;
-    }
-    
-    .info-item .value {
-        font-size: 1.1rem;
-        color: #3a3b45;
-    }
-    
-    .status-badge {
-        padding: 0.5rem 1rem;
-        border-radius: 2rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .status-activo {
-        background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);
-        color: white;
-    }
-    
-    .status-inactivo {
-        background: linear-gradient(135deg, #e74a3b 0%, #c82333 100%);
-        color: white;
-    }
-    
-    .doctor-card {
-        background: linear-gradient(135deg, #36b9cc 0%, #258391 100%);
-        color: white;
-        border-radius: 0.75rem;
-        padding: 2rem;
-        margin-bottom: 2rem;
-    }
-    
-    .doctor-card h4 {
-        margin-bottom: 1rem;
-    }
-    
-    .doctor-info {
-        display: flex;
-        align-items: center;
-        margin-bottom: 0.5rem;
-    }
-    
-    .doctor-info i {
-        margin-right: 0.5rem;
-        width: 20px;
-    }
-    
-    .action-buttons {
-        text-align: center;
-        padding: 2rem;
-        background: #f8f9fc;
-    }
-    
-    .btn-action {
-        margin: 0 0.5rem;
-        padding: 0.75rem 1.5rem;
-        border-radius: 0.5rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .btn-action:hover {
-        transform: translateY(-2px);
-        text-decoration: none;
-    }
-    
-    .btn-primary-custom {
-        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
-        color: white;
-        border: none;
-    }
-    
-    .btn-primary-custom:hover {
-        color: white;
-        box-shadow: 0 0.25rem 0.75rem rgba(78, 115, 223, 0.3);
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="container-fluid">
+<div class="container mx-auto px-4 py-6">
     <!-- Navegación -->
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-                <a href="{% url 'doctor:horario_list' %}">
-                    <i class="fas fa-clock"></i> Horarios
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm text-gray-600">
+            <li>
+                <a href="{% url 'doctor:horario_list' %}" class="text-blue-600 hover:text-blue-800 flex items-center">
+                    <i class="fas fa-clock mr-1"></i> Horarios
                 </a>
             </li>
-            <li class="breadcrumb-item active">{{ horario.get_dia_semana_display }}</li>
+            <li class="flex items-center">
+                <i class="fas fa-chevron-right mx-2 text-gray-400"></i>
+                <span class="text-gray-800 font-medium">{{ horario.get_dia_semana_display }}</span>
+            </li>
         </ol>
     </nav>
 
-    <div class="row">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Información Principal del Horario -->
-        <div class="col-lg-8">
-            <div class="detail-card">
-                <div class="detail-header">
-                    <h1>
-                        <i class="fas fa-calendar-day"></i>
-                        {{ horario.get_dia_semana_display }}
-                    </h1>
-                    <p class="subtitle">Horario de Atención Médica</p>
-                    <span class="status-badge {% if horario.activo %}status-activo{% else %}status-inactivo{% endif %}">
-                        {% if horario.activo %}Activo{% else %}Inactivo{% endif %}
-                    </span>
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-8 text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-calendar-day text-4xl mb-2"></i>
+                        <h1 class="text-3xl font-bold">{{ horario.get_dia_semana_display }}</h1>
+                        <p class="text-blue-100 text-lg mt-2">Horario de Atención Médica</p>
+                    </div>
+                    <div class="inline-flex items-center">
+                        {% if horario.activo %}
+                            <span class="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-semibold uppercase tracking-wide flex items-center">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                Activo
+                            </span>
+                        {% else %}
+                            <span class="bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold uppercase tracking-wide flex items-center">
+                                <i class="fas fa-times-circle mr-2"></i>
+                                Inactivo
+                            </span>
+                        {% endif %}
+                    </div>
                 </div>
                 
-                <div class="info-section">
-                    <h4 class="mb-4">
-                        <i class="fas fa-info-circle text-primary"></i>
+                <!-- Información del Horario -->
+                <div class="p-8">
+                    <h4 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-info-circle text-blue-600 mr-2"></i>
                         Información del Horario
                     </h4>
                     
-                    <div class="info-item">
-                        <i class="fas fa-play-circle"></i>
-                        <div>
-                            <div class="label">Hora de Inicio:</div>
-                            <div class="value">{{ horario.hora_inicio|time:"H:i" }}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <i class="fas fa-stop-circle"></i>
-                        <div>
-                            <div class="label">Hora de Fin:</div>
-                            <div class="value">{{ horario.hora_fin|time:"H:i" }}</div>
-                        </div>
-                    </div>
-                    
-                    {% if horario.intervalo_desde and horario.intervalo_hasta %}
-                    <div class="info-item">
-                        <i class="fas fa-coffee"></i>
-                        <div>
-                            <div class="label">Descanso:</div>
-                            <div class="value">
-                                {{ horario.intervalo_desde|time:"H:i" }} - {{ horario.intervalo_hasta|time:"H:i" }}
+                    <div class="space-y-4">
+                        <div class="flex items-center p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500">
+                            <div class="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mr-4">
+                                <i class="fas fa-play-circle text-blue-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-600">Hora de Inicio</div>
+                                <div class="text-lg font-semibold text-gray-900">{{ horario.hora_inicio|time:"H:i" }}</div>
                             </div>
                         </div>
-                    </div>
-                    {% endif %}
-                    
-                    {% if duracion_horas %}
-                    <div class="info-item">
-                        <i class="fas fa-hourglass-half"></i>
-                        <div>
-                            <div class="label">Duración Total:</div>
-                            <div class="value">{{ duracion_horas|floatformat:1 }} horas</div>
+                        
+                        <div class="flex items-center p-4 bg-gray-50 rounded-lg border-l-4 border-red-500">
+                            <div class="flex items-center justify-center w-12 h-12 bg-red-100 rounded-lg mr-4">
+                                <i class="fas fa-stop-circle text-red-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-600">Hora de Fin</div>
+                                <div class="text-lg font-semibold text-gray-900">{{ horario.hora_fin|time:"H:i" }}</div>
+                            </div>
                         </div>
+                        
+                        {% if horario.intervalo_desde and horario.intervalo_hasta %}
+                        <div class="flex items-center p-4 bg-gray-50 rounded-lg border-l-4 border-orange-500">
+                            <div class="flex items-center justify-center w-12 h-12 bg-orange-100 rounded-lg mr-4">
+                                <i class="fas fa-coffee text-orange-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-600">Descanso</div>
+                                <div class="text-lg font-semibold text-gray-900">
+                                    {{ horario.intervalo_desde|time:"H:i" }} - {{ horario.intervalo_hasta|time:"H:i" }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if duracion_horas %}
+                        <div class="flex items-center p-4 bg-gray-50 rounded-lg border-l-4 border-green-500">
+                            <div class="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mr-4">
+                                <i class="fas fa-hourglass-half text-green-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-600">Duración Total</div>
+                                <div class="text-lg font-semibold text-gray-900">{{ duracion_horas|floatformat:1 }} horas</div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Estadísticas adicionales -->
+                        {% if doctor.duracion_atencion %}
+                        <div class="flex items-center p-4 bg-gray-50 rounded-lg border-l-4 border-purple-500">
+                            <div class="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-lg mr-4">
+                                <i class="fas fa-clock text-purple-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-600">Duración por Cita</div>
+                                <div class="text-lg font-semibold text-gray-900">{{ doctor.duracion_atencion }} minutos</div>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
         
         <!-- Información del Doctor -->
-        <div class="col-lg-4">
+        <div class="lg:col-span-1">
             {% if doctor %}
-            <div class="doctor-card">
-                <h4>
-                    <i class="fas fa-user-md"></i>
+            <div class="bg-gradient-to-br from-teal-500 to-cyan-600 text-white rounded-xl shadow-lg p-6 mb-6">
+                <h4 class="text-xl font-semibold mb-4 flex items-center">
+                    <i class="fas fa-user-md mr-2"></i>
                     Información del Doctor
                 </h4>
                 
-                <div class="doctor-info">
-                    <i class="fas fa-user"></i>
-                    <strong>Nombre:</strong> {{ doctor.nombre_completo }}
-                </div>
-                
-                {% if especialidades %}
-                <div class="doctor-info">
-                    <i class="fas fa-stethoscope"></i>
-                    <strong>Especialidad{% if especialidades|length > 1 %}es{% endif %}:</strong> 
-                    {% for especialidad in especialidades %}
-                        {{ especialidad.nombre }}{% if not forloop.last %}, {% endif %}
-                    {% endfor %}
-                </div>
-                {% endif %}
-                
-                {% if doctor.telefonos %}
-                <div class="doctor-info">
-                    <i class="fas fa-phone"></i>
-                    <strong>Teléfono:</strong> {{ doctor.telefonos }}
-                </div>
-                {% endif %}
-                
-                {% if doctor.email %}
-                <div class="doctor-info">
-                    <i class="fas fa-envelope"></i>
-                    <strong>Email:</strong> {{ doctor.email }}
-                </div>
-                {% endif %}
-                
-                <div class="doctor-info">
-                    <i class="fas fa-clock"></i>
-                    <strong>Duración por Cita:</strong> {{ doctor.duracion_atencion }} minutos
+                <div class="space-y-3">
+                    <div class="flex items-center">
+                        <i class="fas fa-user w-5 mr-3"></i>
+                        <div>
+                            <div class="text-sm opacity-90">Nombre</div>
+                            <div class="font-semibold">{{ doctor.nombre_completo }}</div>
+                        </div>
+                    </div>
+                    
+                    {% if especialidades %}
+                    <div class="flex items-start">
+                        <i class="fas fa-stethoscope w-5 mr-3 mt-1"></i>
+                        <div>
+                            <div class="text-sm opacity-90">Especialidad{% if especialidades|length > 1 %}es{% endif %}</div>
+                            <div class="font-semibold">
+                                {% for especialidad in especialidades %}
+                                    {{ especialidad.nombre }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if doctor.telefonos %}
+                    <div class="flex items-center">
+                        <i class="fas fa-phone w-5 mr-3"></i>
+                        <div>
+                            <div class="text-sm opacity-90">Teléfono</div>
+                            <div class="font-semibold">{{ doctor.telefonos }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if doctor.email %}
+                    <div class="flex items-center">
+                        <i class="fas fa-envelope w-5 mr-3"></i>
+                        <div>
+                            <div class="text-sm opacity-90">Email</div>
+                            <div class="font-semibold">{{ doctor.email }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="flex items-center">
+                        <i class="fas fa-clock w-5 mr-3"></i>
+                        <div>
+                            <div class="text-sm opacity-90">Duración por Cita</div>
+                            <div class="font-semibold">{{ doctor.duracion_atencion|default:30 }} minutos</div>
+                        </div>
+                    </div>
                 </div>
             </div>
             {% endif %}
+
+            <!-- Resumen del Horario -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-chart-bar text-blue-600 mr-2"></i>
+                    Resumen
+                </h4>
+                
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-600">Estado</span>
+                        <span class="{% if horario.activo %}text-green-600{% else %}text-red-600{% endif %} font-semibold">
+                            {% if horario.activo %}Activo{% else %}Inactivo{% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-600">Día</span>
+                        <span class="text-gray-900 font-semibold">{{ horario.get_dia_semana_display }}</span>
+                    </div>
+                    
+                    {% if duracion_horas %}
+                    <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-600">Horas Totales</span>
+                        <span class="text-green-600 font-semibold">{{ duracion_horas|floatformat:1 }}h</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
     
     <!-- Botones de Acción -->
-    <div class="action-buttons">
-        <a href="{% url 'doctor:horario_list' %}" class="btn-action btn-primary-custom">
-            <i class="fas fa-arrow-left"></i> Volver a Lista
+    <div class="flex justify-center space-x-4 mt-8">
+        <a href="{% url 'doctor:horario_list' %}" 
+           class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Volver a Lista
+        </a>
+        
+        <a href="{% url 'doctor:horario_semanal_create' %}" 
+           class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center">
+            <i class="fas fa-edit mr-2"></i>
+            Editar Horarios
+        </a>
+        
+        <a href="{% url 'doctor:calendario_citas' %}" 
+           class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center">
+            <i class="fas fa-calendar-alt mr-2"></i>
+            Ver Calendario
         </a>
     </div>
 </div>
