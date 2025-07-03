@@ -15,6 +15,7 @@ from proy_clinico.settings import PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL
 logger = logging.getLogger(__name__)
 
 from applications.doctor.models import Pago, DetallePago, Atencion, ServiciosAdicionales
+from applications.core.models import Paciente
 from applications.doctor.utils.pago import MetodoPagoChoices, EstadoPagoChoices
 from applications.doctor.utils.doctor import DiaSemanaChoices
 from applications.doctor.utils.paypal_validator import PayPalValidator, validate_paypal_payment_amount, log_paypal_transaction
@@ -31,10 +32,20 @@ def crear_pago_view(request):
 
     # Obtener servicios adicionales disponibles
     servicios = ServiciosAdicionales.objects.filter(activo=True)
+    
+    # Obtener pacientes que han sido atendidos (tienen al menos una atención)
+    pacientes_atendidos = Atencion.objects.select_related('paciente').values(
+        'paciente__id',
+        'paciente__nombres', 
+        'paciente__apellidos',
+        'paciente__cedula_ecuatoriana',
+        'paciente__dni'
+    ).distinct().order_by('paciente__nombres', 'paciente__apellidos')
 
     context = {
         "atencion": atencion,
         "servicios": servicios,
+        "pacientes_atendidos": pacientes_atendidos,
         "metodos_pago": MetodoPagoChoices.choices,
         "paypal_client_id": PAYPAL_CLIENT_ID,
         "paypal_mode": PAYPAL_MODE,
