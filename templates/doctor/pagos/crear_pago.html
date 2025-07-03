@@ -179,109 +179,46 @@ let pagoCreado = null;
 let metodoPagoSeleccionado = null;
 let paypalButtonsRendered = false;
 
-// Sistema de logging detallado
-function logStep(step, data = null, isError = false) {
-    const timestamp = new Date().toISOString();
-    const logMessage = `[${timestamp}] PASO ${step}`;
-    
-    if (isError) {
-        console.error(logMessage, data);
-        showDebugMessage(`❌ ERROR en ${step}: ${data}`, 'error');
-    } else {
-        console.log(logMessage, data);
-        showDebugMessage(`✅ ${step}`, 'info');
-    }
-}
-
-function showDebugMessage(message, type = 'info') {
-    const debugContainer = document.getElementById('debug-container') || createDebugContainer();
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `p-2 mb-1 text-xs rounded ${
-        type === 'error' ? 'bg-red-100 text-red-800' : 
-        type === 'success' ? 'bg-green-100 text-green-800' : 
-        'bg-blue-100 text-blue-800'
-    }`;
-    messageDiv.textContent = message;
-    debugContainer.appendChild(messageDiv);
-    
-    // Mantener solo los últimos 10 mensajes
-    while (debugContainer.children.length > 10) {
-        debugContainer.removeChild(debugContainer.firstChild);
-    }
-}
-
-function createDebugContainer() {
-    const container = document.createElement('div');
-    container.id = 'debug-container';
-    container.className = 'fixed bottom-4 right-4 w-80 max-h-60 overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-lg p-2 z-50';
-    container.innerHTML = '<div class="font-bold text-sm mb-2 text-gray-700">Debug PayPal:</div>';
-    document.body.appendChild(container);
-    return container;
-}
-
 // Inicialización
 document.addEventListener('DOMContentLoaded', function() {
-    logStep('1 - Inicializando aplicación');
-    
     try {
         initializeEventListeners();
-        logStep('2 - Event listeners configurados');
-        
         actualizarResumen();
-        logStep('3 - Resumen actualizado');
-        
-        // Cargar PayPal SDK dinámicamente
         loadPayPalSDK();
-        logStep('4 - Iniciando carga de PayPal SDK');
     } catch (error) {
-        logStep('ERROR en inicialización', error.message, true);
+        showError('Error inicializando la aplicación: ' + error.message);
     }
 });
 
 function loadPayPalSDK() {
     // Verificar si PayPal ya está cargado
     if (window.paypal) {
-        console.log('PayPal SDK ya está cargado');
         initializePayPal();
         return;
     }
     
-    console.log('Cargando PayPal SDK...');
-    console.log('Client ID:', '{{ paypal_client_id }}');
-    
     // Crear script de PayPal
     const script = document.createElement('script');
-    script.src = `https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD&intent=capture&locale=es_ES&debug=true&components=buttons`;
+    script.src = `https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD&intent=capture&locale=es_ES&components=buttons`;
     script.async = true;
     script.defer = true;
     
-    logStep('5 - Configurando script de PayPal', {
-        clientId: '{{ paypal_client_id }}',
-        url: script.src
-    });
-    
     script.onload = function() {
-        logStep('6 - PayPal SDK cargado exitosamente');
         initializePayPal();
     };
     
     script.onerror = function(error) {
-        logStep('ERROR - Fallo al cargar PayPal SDK', error, true);
         showError('Error cargando PayPal. Por favor, intente de nuevo.');
     };
     
     document.head.appendChild(script);
-    logStep('7 - Script de PayPal agregado al DOM');
 }
 
 function initializePayPal() {
     if (!window.paypal) {
-        console.error('PayPal SDK no disponible');
         showError('PayPal SDK no está disponible. Recargue la página.');
         return;
     }
-    
-    console.log('Inicializando PayPal...');
     
     try {
         // Configuración de PayPal
@@ -294,11 +231,9 @@ function initializePayPal() {
                 height: 40
             },
             createOrder: async function(data, actions) {
-                console.log('PayPal createOrder iniciado');
                 try {
                     // Validar que hay servicios seleccionados
                     const resumen = actualizarResumen();
-                    console.log('Resumen del pago:', resumen);
                     
                     if (resumen.servicios.length === 0) {
                         throw new Error('Por favor seleccione al menos un servicio');
@@ -317,7 +252,6 @@ function initializePayPal() {
                         throw new Error('Error creando el pago en el sistema');
                     }
                     
-                    console.log('Pago creado en el sistema:', pagoCreado);
                     hideLoading();
                     
                     // Crear orden de PayPal
@@ -338,24 +272,19 @@ function initializePayPal() {
                         }
                     };
                     
-                    console.log('Creando orden PayPal con datos:', orderData);
                     return actions.order.create(orderData);
                 } catch (error) {
                     hideLoading();
-                    console.error('Error en createOrder:', error);
                     showError('Error: ' + error.message);
                     throw error;
                 }
             },
             onApprove: async function(data, actions) {
-                console.log('PayPal onApprove iniciado', data);
                 try {
                     showLoading('Procesando pago...');
                     
                     // Capturar el pago
-                    console.log('Capturando orden PayPal...');
                     const order = await actions.order.capture();
-                    console.log('Orden PayPal capturada:', order);
                     
                     if (!order || !order.id || !order.payer || !order.payer.payer_id) {
                         throw new Error('Respuesta de PayPal incompleta');
@@ -367,7 +296,6 @@ function initializePayPal() {
                     }
                     
                     // Procesar el pago en nuestro sistema
-                    console.log('Procesando pago en el sistema...');
                     const response = await fetch('/doctor/api/procesar-pago-paypal/', {
                         method: 'POST',
                         headers: {
@@ -391,12 +319,10 @@ function initializePayPal() {
                     }
                     
                     const result = await response.json();
-                    console.log('Respuesta del servidor:', result);
                     hideLoading();
                     
                     if (result.success) {
                         showSuccess('¡Pago procesado exitosamente!');
-                        console.log('Redirigiendo a página de detalle...');
                         setTimeout(() => {
                             window.location.href = `/doctor/pagos/${pagoCreado.pago_id}/`;
                         }, 2000);
@@ -405,7 +331,6 @@ function initializePayPal() {
                     }
                 } catch (error) {
                     hideLoading();
-                    console.error('Error en onApprove:', error);
                     showError('Error procesando el pago: ' + error.message);
                     
                     // Intentar cancelar el pago si hubo error
@@ -422,12 +347,11 @@ function initializePayPal() {
                             })
                         });
                     } catch (cancelError) {
-                        console.error('Error cancelando pago:', cancelError);
+                        // Error silencioso al cancelar
                     }
                 }
             },
             onCancel: async function(data) {
-                console.log('Pago cancelado por el usuario');
                 if (pagoCreado) {
                     try {
                         await fetch('/doctor/api/cancelar-pago-paypal/', {
@@ -441,25 +365,21 @@ function initializePayPal() {
                             })
                         });
                     } catch (error) {
-                        console.error('Error cancelando pago:', error);
+                        // Error silencioso al cancelar
                     }
                 }
                 showInfo('Pago cancelado');
             },
             onError: function(err) {
-                console.error('Error PayPal:', err);
                 hideLoading();
                 showError('Error procesando el pago con PayPal. Por favor, inténtelo de nuevo.');
             }
         }).render('#paypal-button-container').then(() => {
             paypalButtonsRendered = true;
-            console.log('Botones de PayPal renderizados exitosamente');
         }).catch((error) => {
-            console.error('Error renderizando botones de PayPal:', error);
             showError('Error inicializando PayPal. Por favor, recargue la página.');
         });
     } catch (error) {
-        console.error('Error inicializando PayPal:', error);
         showError('Error configurando PayPal. Por favor, recargue la página.');
     }
 }
@@ -623,13 +543,11 @@ async function crearPago() {
         
         if (result.success) {
             pagoCreado = result;
-            console.log('Pago creado:', pagoCreado);
             return result;
         } else {
             throw new Error(result.error || 'Error creando el pago');
         }
     } catch (error) {
-        console.error('Error creando pago:', error);
         throw error;
     }
 }

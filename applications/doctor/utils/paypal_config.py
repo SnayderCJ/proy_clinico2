@@ -8,7 +8,6 @@ PAYPAL_CONFIG = {
     'CLIENT_ID': getattr(settings, 'PAYPAL_CLIENT_ID', ''),
     'CLIENT_SECRET': getattr(settings, 'PAYPAL_CLIENT_SECRET', ''),
     'MODE': getattr(settings, 'PAYPAL_MODE', 'sandbox'),
-    'DEBUG': getattr(settings, 'PAYPAL_DEBUG', True),
 }
 
 # URLs de PayPal según el modo
@@ -30,7 +29,6 @@ def get_paypal_sdk_config():
         'client_id': PAYPAL_CONFIG['CLIENT_ID'],
         'currency': 'USD',
         'intent': 'capture',
-        'debug': PAYPAL_CONFIG['DEBUG'],
         'locale': 'es_ES'
     }
 

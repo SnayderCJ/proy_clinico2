@@ -157,6 +157,77 @@
   </main>
 </div>
 
+<!-- Chat de Soporte -->
+<div id="chat-support" class="fixed bottom-6 right-6 z-50">
+  <!-- Botón flotante del chat -->
+  <div id="chat-toggle" class="bg-blue-600 hover:bg-blue-700 text-white rounded-full w-16 h-16 flex items-center justify-center cursor-pointer shadow-lg transition-all duration-300 transform hover:scale-110">
+    <i id="chat-icon" class="fas fa-comments text-xl"></i>
+  </div>
+
+  <!-- Ventana del chat -->
+  <div id="chat-window" class="hidden absolute bottom-20 right-0 w-80 h-96 bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col">
+    <!-- Header del chat -->
+    <div class="bg-blue-600 text-white p-4 rounded-t-lg flex items-center justify-between">
+      <div class="flex items-center">
+        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+          <i class="fas fa-robot text-sm"></i>
+        </div>
+        <div>
+          <h3 class="font-semibold">Asistente SaludTotal</h3>
+          <p class="text-xs text-blue-100">En línea</p>
+        </div>
+      </div>
+      <button id="chat-close" class="text-blue-100 hover:text-white">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Área de mensajes -->
+    <div id="chat-messages" class="flex-1 p-4 overflow-y-auto bg-gray-50">
+      <div class="bot-message mb-3">
+        <div class="flex items-start">
+          <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mr-2 mt-1">
+            <i class="fas fa-robot text-xs text-white"></i>
+          </div>
+          <div class="bg-white rounded-lg p-3 shadow-sm max-w-xs">
+            <p class="text-sm text-gray-800">¡Hola! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Opciones rápidas -->
+    <div id="quick-options" class="p-3 border-t border-gray-200">
+      <p class="text-xs text-gray-600 mb-2">Opciones rápidas:</p>
+      <div class="grid grid-cols-2 gap-2">
+        <button class="quick-option bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs p-2 rounded transition-colors" data-option="pacientes">
+          👥 Gestión de Pacientes
+        </button>
+        <button class="quick-option bg-green-50 hover:bg-green-100 text-green-700 text-xs p-2 rounded transition-colors" data-option="citas">
+          📅 Programar Citas
+        </button>
+        <button class="quick-option bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs p-2 rounded transition-colors" data-option="pagos">
+          💳 Sistema de Pagos
+        </button>
+        <button class="quick-option bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs p-2 rounded transition-colors" data-option="reportes">
+          📊 Reportes
+        </button>
+      </div>
+    </div>
+
+    <!-- Input del chat -->
+    <div class="p-3 border-t border-gray-200">
+      <div class="flex">
+        <input type="text" id="chat-input" placeholder="Escribe tu pregunta..." 
+               class="flex-1 border border-gray-300 rounded-l-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+        <button id="chat-send" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-r-lg transition-colors">
+          <i class="fas fa-paper-plane text-sm"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <style>
   /* Custom animations */
   @keyframes fadeInUp {
@@ -190,6 +261,21 @@
     }
   }
 
+  @keyframes bounce {
+    0%, 20%, 53%, 80%, 100% {
+      transform: translate3d(0, 0, 0);
+    }
+    40%, 43% {
+      transform: translate3d(0, -8px, 0);
+    }
+    70% {
+      transform: translate3d(0, -4px, 0);
+    }
+    90% {
+      transform: translate3d(0, -2px, 0);
+    }
+  }
+
   .module-card {
     animation: fadeInUp 0.6s ease-out;
   }
@@ -209,6 +295,53 @@
   /* Backdrop blur effect */
   .backdrop-blur-lg {
     backdrop-filter: blur(16px);
+  }
+
+  /* Chat animations */
+  #chat-toggle {
+    animation: bounce 2s infinite;
+  }
+
+  #chat-window {
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  .bot-message, .user-message {
+    animation: fadeInUp 0.3s ease-out;
+  }
+
+  /* Typing indicator */
+  .typing-indicator {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: white;
+    border-radius: 12px;
+    margin: 4px 0;
+  }
+
+  .typing-indicator span {
+    height: 6px;
+    width: 6px;
+    background: #9CA3AF;
+    border-radius: 50%;
+    display: inline-block;
+    margin: 0 1px;
+    animation: typing 1.4s infinite ease-in-out;
+  }
+
+  .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+  .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+  @keyframes typing {
+    0%, 80%, 100% {
+      transform: scale(0.8);
+      opacity: 0.5;
+    }
+    40% {
+      transform: scale(1);
+      opacity: 1;
+    }
   }
 </style>
 
@@ -235,4 +368,501 @@
     overflow: hidden;
   }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatToggle = document.getElementById('chat-toggle');
+    const chatWindow = document.getElementById('chat-window');
+    const chatClose = document.getElementById('chat-close');
+    const chatInput = document.getElementById('chat-input');
+    const chatSend = document.getElementById('chat-send');
+    const chatMessages = document.getElementById('chat-messages');
+    const quickOptions = document.querySelectorAll('.quick-option');
+
+    let conversationContext = [];
+    let userName = '{{ user.get_full_name|default:user.username }}';
+
+    // Respuestas conversacionales más dinámicas
+    const botResponses = {
+        'saludo': [
+            `¡Hola ${userName}! 👋 ¿En qué puedo ayudarte hoy?`,
+            `¡Buen día ${userName}! Estoy aquí para asistirte con el sistema.`,
+            `¡Hola! Soy tu asistente virtual de SaludTotal. ¿Qué necesitas?`
+        ],
+        'despedida': [
+            '¡Hasta luego! Si necesitas más ayuda, estaré aquí. 😊',
+            '¡Que tengas un excelente día! No dudes en contactarme si necesitas algo más.',
+            '¡Adiós! Recuerda que siempre puedes contar conmigo para ayudarte.'
+        ],
+        'agradecimiento': [
+            '¡De nada! Me alegra poder ayudarte. 😊',
+            '¡Un placer ayudarte! ¿Hay algo más en lo que pueda asistirte?',
+            '¡Para eso estoy aquí! ¿Necesitas ayuda con algo más?'
+        ],
+        'pacientes': {
+            text: '👥 Perfecto, hablemos sobre la gestión de pacientes. ¿Qué específicamente necesitas hacer?',
+            options: [
+                '• 📝 Registrar un nuevo paciente',
+                '• 🔍 Buscar información de un paciente existente',
+                '• ✏️ Actualizar datos médicos o personales',
+                '• 📋 Ver historial completo de atenciones',
+                '• 📊 Generar reporte de pacientes'
+            ],
+            followUp: '¿Te gustaría que te explique alguno de estos procesos paso a paso?'
+        },
+        'citas': {
+            text: '📅 Excelente, te ayudo con las citas médicas. ¿Qué necesitas hacer?',
+            options: [
+                '• 🆕 Programar una nueva cita',
+                '• 📝 Modificar una cita existente',
+                '• ❌ Cancelar una cita',
+                '• 👀 Ver calendario de disponibilidad',
+                '• 🔔 Configurar recordatorios automáticos'
+            ],
+            followUp: '¿Quieres que te guíe en alguno de estos procesos?'
+        },
+        'pagos': {
+            text: '💳 Te ayudo con el sistema de pagos. ¿Qué operación necesitas realizar?',
+            options: [
+                '• 💰 Crear un nuevo pago',
+                '• 🏦 Procesar pago con PayPal',
+                '• 💵 Registrar pago en efectivo',
+                '• 📊 Ver historial de transacciones',
+                '• 📈 Generar reportes de ingresos',
+                '• 🔧 Configurar métodos de pago'
+            ],
+            followUp: '¿Necesitas ayuda detallada con alguna de estas opciones?'
+        },
+        'reportes': {
+            text: '📊 Los reportes son muy útiles para el análisis. ¿Qué tipo de información necesitas?',
+            options: [
+                '• 👥 Estadísticas de pacientes atendidos',
+                '• 💰 Ingresos por período específico',
+                '• 🏥 Servicios más solicitados',
+                '• 👨‍⚕️ Rendimiento por doctor',
+                '• 📅 Reportes de citas programadas',
+                '• 📋 Análisis de diagnósticos frecuentes'
+            ],
+            followUp: '¿Te interesa algún reporte en particular? Puedo explicarte cómo generarlo.'
+        },
+        'ayuda_navegacion': {
+            text: '🧭 Te ayudo a navegar por el sistema. ¿Dónde necesitas ir?',
+            options: [
+                '• 🏠 Volver al inicio',
+                '• 👥 Módulo de Pacientes',
+                '• 📅 Calendario de Citas',
+                '• 💳 Sistema de Pagos',
+                '• 📊 Reportes y Estadísticas',
+                '• ⚙️ Configuración del sistema'
+            ],
+            followUp: '¿Necesitas que te explique qué puedes hacer en algún módulo específico?'
+        },
+        'problemas_tecnicos': {
+            text: '🔧 Entiendo que tienes un problema técnico. ¿Qué está ocurriendo?',
+            options: [
+                '• 🐛 Error al cargar una página',
+                '• 💳 Problemas con pagos de PayPal',
+                '• 📱 Problemas de visualización',
+                '• 🔐 Problemas de acceso o permisos',
+                '• 📊 Reportes que no se generan',
+                '• 🔄 Sistema lento o que no responde'
+            ],
+            followUp: 'Describe brevemente el problema y te ayudo a solucionarlo.'
+        },
+        'capacitacion': {
+            text: '🎓 ¡Excelente! La capacitación es clave. ¿En qué área necesitas entrenamiento?',
+            options: [
+                '• 👥 Gestión completa de pacientes',
+                '• 📅 Programación eficiente de citas',
+                '• 💳 Manejo del sistema de pagos',
+                '• 📊 Generación e interpretación de reportes',
+                '• 🔐 Gestión de usuarios y permisos',
+                '• 🏥 Flujo completo de atención médica'
+            ],
+            followUp: '¿Prefieres una explicación paso a paso o tienes alguna duda específica?'
+        },
+        'default': {
+            text: 'Entiendo. Puedo ayudarte con muchas cosas en SaludTotal:',
+            options: [
+                '• 👥 Gestión de pacientes y citas médicas',
+                '• 💳 Sistema de pagos y facturación',
+                '• 📊 Generación de reportes y estadísticas',
+                '• 🧭 Navegación por los módulos del sistema',
+                '• 🔧 Solución de problemas técnicos',
+                '• 🎓 Capacitación y tutoriales'
+            ],
+            followUp: '¿Cuál de estos temas te interesa más?'
+        }
+    };
+
+    // Patrones de conversación más sofisticados
+    const conversationPatterns = {
+        greetings: ['hola', 'buenos días', 'buenas tardes', 'buenas noches', 'saludos', 'hey', 'hi'],
+        farewells: ['adiós', 'hasta luego', 'nos vemos', 'chao', 'bye', 'hasta pronto', 'me voy'],
+        thanks: ['gracias', 'muchas gracias', 'te agradezco', 'thanks', 'perfecto gracias'],
+        help: ['ayuda', 'ayúdame', 'necesito ayuda', 'no sé', 'estoy perdido', 'help'],
+        problems: ['error', 'problema', 'no funciona', 'falla', 'bug', 'issue', 'no puedo'],
+        training: ['cómo', 'tutorial', 'enseñar', 'aprender', 'capacitación', 'entrenar', 'explicar'],
+        navigation: ['dónde', 'ir a', 'navegar', 'encontrar', 'ubicar', 'buscar módulo']
+    };
+
+    // Toggle chat window
+    chatToggle.addEventListener('click', function() {
+        chatWindow.classList.toggle('hidden');
+        if (!chatWindow.classList.contains('hidden')) {
+            chatInput.focus();
+        }
+    });
+
+    // Close chat
+    chatClose.addEventListener('click', function() {
+        chatWindow.classList.add('hidden');
+    });
+
+    // Quick options
+    quickOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            const optionType = this.dataset.option;
+            addUserMessage(this.textContent.trim());
+            setTimeout(() => {
+                addBotResponse(optionType);
+            }, 500);
+        });
+    });
+
+    // Send message
+    function sendMessage() {
+        const message = chatInput.value.trim();
+        if (message) {
+            addUserMessage(message);
+            chatInput.value = '';
+            
+            // Simulate bot response
+            setTimeout(() => {
+                const responseType = detectMessageType(message);
+                addBotResponse(responseType);
+            }, 1000);
+        }
+    }
+
+    chatSend.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    // Add user message
+    function addUserMessage(message) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'user-message mb-3 flex justify-end';
+        messageDiv.innerHTML = `
+            <div class="bg-blue-600 text-white rounded-lg p-3 shadow-sm max-w-xs">
+                <p class="text-sm">${message}</p>
+            </div>
+        `;
+        chatMessages.appendChild(messageDiv);
+        scrollToBottom();
+    }
+
+    // Add bot response
+    function addBotResponse(type) {
+        // Show typing indicator
+        showTypingIndicator();
+        
+        setTimeout(() => {
+            hideTypingIndicator();
+            
+            const response = botResponses[type] || botResponses['default'];
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'bot-message mb-3';
+            
+            let optionsHtml = '';
+            if (response.options) {
+                optionsHtml = response.options.map(option => `<p class="text-xs text-gray-600 mt-1">${option}</p>`).join('');
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="flex items-start">
+                    <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mr-2 mt-1">
+                        <i class="fas fa-robot text-xs text-white"></i>
+                    </div>
+                    <div class="bg-white rounded-lg p-3 shadow-sm max-w-xs">
+                        <p class="text-sm text-gray-800">${response.text}</p>
+                        ${optionsHtml}
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+        }, 1500);
+    }
+
+    // Show typing indicator
+    function showTypingIndicator() {
+        const typingDiv = document.createElement('div');
+        typingDiv.id = 'typing-indicator';
+        typingDiv.className = 'bot-message mb-3';
+        typingDiv.innerHTML = `
+            <div class="flex items-start">
+                <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mr-2 mt-1">
+                    <i class="fas fa-robot text-xs text-white"></i>
+                </div>
+                <div class="typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        `;
+        chatMessages.appendChild(typingDiv);
+        scrollToBottom();
+    }
+
+    // Hide typing indicator
+    function hideTypingIndicator() {
+        const typingIndicator = document.getElementById('typing-indicator');
+        if (typingIndicator) {
+            typingIndicator.remove();
+        }
+    }
+
+    // Detect message type con patrones más sofisticados
+    function detectMessageType(message) {
+        const lowerMessage = message.toLowerCase();
+        conversationContext.push(lowerMessage);
+        
+        // Detectar saludos
+        if (conversationPatterns.greetings.some(greeting => lowerMessage.includes(greeting))) {
+            return 'saludo';
+        }
+        
+        // Detectar despedidas
+        if (conversationPatterns.farewells.some(farewell => lowerMessage.includes(farewell))) {
+            return 'despedida';
+        }
+        
+        // Detectar agradecimientos
+        if (conversationPatterns.thanks.some(thanks => lowerMessage.includes(thanks))) {
+            return 'agradecimiento';
+        }
+        
+        // Detectar solicitudes de ayuda general
+        if (conversationPatterns.help.some(help => lowerMessage.includes(help))) {
+            return 'ayuda_navegacion';
+        }
+        
+        // Detectar problemas técnicos
+        if (conversationPatterns.problems.some(problem => lowerMessage.includes(problem))) {
+            return 'problemas_tecnicos';
+        }
+        
+        // Detectar solicitudes de capacitación
+        if (conversationPatterns.training.some(training => lowerMessage.includes(training))) {
+            return 'capacitacion';
+        }
+        
+        // Detectar navegación
+        if (conversationPatterns.navigation.some(nav => lowerMessage.includes(nav))) {
+            return 'ayuda_navegacion';
+        }
+        
+        // Detectar temas específicos
+        if (lowerMessage.includes('paciente') || lowerMessage.includes('registrar') || lowerMessage.includes('buscar paciente')) {
+            return 'pacientes';
+        } else if (lowerMessage.includes('cita') || lowerMessage.includes('calendario') || lowerMessage.includes('agendar') || lowerMessage.includes('programar')) {
+            return 'citas';
+        } else if (lowerMessage.includes('pago') || lowerMessage.includes('factura') || lowerMessage.includes('paypal') || lowerMessage.includes('cobrar')) {
+            return 'pagos';
+        } else if (lowerMessage.includes('reporte') || lowerMessage.includes('estadística') || lowerMessage.includes('informe') || lowerMessage.includes('análisis')) {
+            return 'reportes';
+        } else {
+            return 'default';
+        }
+    }
+
+    // Función mejorada para respuestas del bot
+    function addBotResponse(type) {
+        showTypingIndicator();
+        
+        setTimeout(() => {
+            hideTypingIndicator();
+            
+            let response;
+            let responseText;
+            
+            // Manejar respuestas simples (arrays)
+            if (Array.isArray(botResponses[type])) {
+                responseText = botResponses[type][Math.floor(Math.random() * botResponses[type].length)];
+                response = { text: responseText, options: [], followUp: '' };
+            } else {
+                response = botResponses[type] || botResponses['default'];
+                responseText = response.text;
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'bot-message mb-3';
+            
+            let optionsHtml = '';
+            if (response.options && response.options.length > 0) {
+                optionsHtml = response.options.map(option => `<p class="text-xs text-gray-600 mt-1">${option}</p>`).join('');
+            }
+            
+            let followUpHtml = '';
+            if (response.followUp) {
+                followUpHtml = `<p class="text-xs text-blue-600 mt-2 font-medium">${response.followUp}</p>`;
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="flex items-start">
+                    <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mr-2 mt-1">
+                        <i class="fas fa-robot text-xs text-white"></i>
+                    </div>
+                    <div class="bg-white rounded-lg p-3 shadow-sm max-w-xs">
+                        <p class="text-sm text-gray-800">${responseText}</p>
+                        ${optionsHtml}
+                        ${followUpHtml}
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+            
+            // Agregar sugerencias contextuales después de ciertos tipos de respuesta
+            if (['pacientes', 'citas', 'pagos', 'reportes'].includes(type)) {
+                setTimeout(() => {
+                    addContextualSuggestions(type);
+                }, 2000);
+            }
+        }, Math.random() * 1000 + 800); // Tiempo de respuesta más natural
+    }
+
+    // Agregar sugerencias contextuales
+    function addContextualSuggestions(type) {
+        const suggestions = {
+            'pacientes': ['¿Cómo registro un paciente?', '¿Cómo busco un paciente?', '¿Cómo actualizo datos?'],
+            'citas': ['¿Cómo programo una cita?', '¿Cómo veo el calendario?', '¿Cómo cancelo una cita?'],
+            'pagos': ['¿Cómo creo un pago?', '¿Cómo uso PayPal?', '¿Cómo veo reportes de ingresos?'],
+            'reportes': ['¿Cómo genero reportes?', '¿Qué reportes hay disponibles?', '¿Cómo interpreto los datos?']
+        };
+
+        if (suggestions[type]) {
+            const suggestionDiv = document.createElement('div');
+            suggestionDiv.className = 'bot-message mb-3';
+            
+            const suggestionButtons = suggestions[type].map(suggestion => 
+                `<button class="suggestion-btn bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs p-2 m-1 rounded transition-colors cursor-pointer border border-blue-200" onclick="handleSuggestionClick('${suggestion}')">${suggestion}</button>`
+            ).join('');
+            
+            suggestionDiv.innerHTML = `
+                <div class="flex items-start">
+                    <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mr-2 mt-1">
+                        <i class="fas fa-lightbulb text-xs text-white"></i>
+                    </div>
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 shadow-sm max-w-xs border border-blue-100">
+                        <p class="text-xs text-gray-600 mb-2">💡 Preguntas frecuentes:</p>
+                        <div class="flex flex-wrap">
+                            ${suggestionButtons}
+                        </div>
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(suggestionDiv);
+            scrollToBottom();
+        }
+    }
+
+    // Manejar clicks en sugerencias
+    window.handleSuggestionClick = function(suggestion) {
+        addUserMessage(suggestion);
+        setTimeout(() => {
+            const responseType = detectMessageType(suggestion);
+            addDetailedResponse(suggestion, responseType);
+        }, 800);
+    };
+
+    // Respuestas detalladas para preguntas específicas
+    function addDetailedResponse(question, type) {
+        const detailedResponses = {
+            '¿Cómo registro un paciente?': {
+                text: '📝 Para registrar un nuevo paciente sigue estos pasos:',
+                steps: [
+                    '1️⃣ Ve al módulo "Pacientes" desde el menú principal',
+                    '2️⃣ Haz clic en "Nuevo Paciente" o el botón "+"',
+                    '3️⃣ Completa los datos básicos: nombres, apellidos, cédula',
+                    '4️⃣ Agrega información médica: tipo de sangre, alergias',
+                    '5️⃣ Guarda los cambios y ¡listo! 🎉'
+                ]
+            },
+            '¿Cómo programo una cita?': {
+                text: '📅 Programar una cita es muy fácil:',
+                steps: [
+                    '1️⃣ Accede al módulo "Calendario" o "Citas"',
+                    '2️⃣ Selecciona la fecha y hora deseada',
+                    '3️⃣ Elige el paciente de la lista',
+                    '4️⃣ Asigna el doctor disponible',
+                    '5️⃣ Confirma la cita y envía recordatorio 📧'
+                ]
+            },
+            '¿Cómo creo un pago?': {
+                text: '💳 Crear un pago es sencillo:',
+                steps: [
+                    '1️⃣ Ve al módulo "Pagos" desde el menú',
+                    '2️⃣ Haz clic en "Nuevo Pago"',
+                    '3️⃣ Selecciona los servicios a cobrar',
+                    '4️⃣ Elige el método: efectivo, PayPal, etc.',
+                    '5️⃣ Procesa el pago y genera recibo 🧾'
+                ]
+            }
+        };
+
+        const response = detailedResponses[question];
+        if (response) {
+            showTypingIndicator();
+            
+            setTimeout(() => {
+                hideTypingIndicator();
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'bot-message mb-3';
+                
+                const stepsHtml = response.steps.map(step => 
+                    `<p class="text-xs text-gray-700 mt-1 pl-2 border-l-2 border-blue-200">${step}</p>`
+                ).join('');
+                
+                messageDiv.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-2 mt-1">
+                            <i class="fas fa-check text-xs text-white"></i>
+                        </div>
+                        <div class="bg-white rounded-lg p-3 shadow-sm max-w-xs border-l-4 border-green-400">
+                            <p class="text-sm text-gray-800 font-medium">${response.text}</p>
+                            <div class="mt-2">
+                                ${stepsHtml}
+                            </div>
+                            <p class="text-xs text-green-600 mt-2">¿Te ayuda esta información? 😊</p>
+                        </div>
+                    </div>
+                `;
+                chatMessages.appendChild(messageDiv);
+                scrollToBottom();
+            }, 1200);
+        } else {
+            addBotResponse(type);
+        }
+    }
+
+    // Scroll to bottom
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Close chat when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!chatWindow.contains(e.target) && !chatToggle.contains(e.target)) {
+            chatWindow.classList.add('hidden');
+        }
+    });
+});
+</script>
 {% endblock content %}

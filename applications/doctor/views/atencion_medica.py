@@ -210,9 +210,6 @@ class AtencionUpdateView(PermissionMixin, UpdateViewMixin, UpdateView):
 
         # Datos de la atención actual para usar directamente en el HTML
         context["atencion"] = atencion
-        print("atenciones")
-        print(atencion.temperatura)
-        print(type(atencion.temperatura))
         # Solo los medicamentos para cargar dinámicamente con JavaScript
         medicamentos = []
         for detalle in atencion.detalles.select_related("medicamento").all():
@@ -420,7 +417,6 @@ def crear_pago_pendiente(atencion):
 
         return pago
     except Exception as e:
-        print(f"Error al crear pago pendiente: {str(e)}")
         return None
 
 def obtener_contexto_paciente(id_paciente):
