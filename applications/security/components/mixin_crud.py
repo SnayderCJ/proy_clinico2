@@ -30,6 +30,12 @@ class ListViewMixin(object):
         userGroupSession=UserGroupSession(self.request)
         group = userGroupSession.get_group_session()
         context['permissions'] = GroupPermission.get_permission_dict_of_group(self.request.user,group)
+        
+        # Agregar grupo al contexto
+        if group:
+            context["group"] = group
+            context["role_name"] = group.name
+        
         # crear la data y la session con los menus y modulos del usuario 
         
         # Asegurar que la paginación funcione correctamente
@@ -52,6 +58,12 @@ class CreateViewMixin(object):
         userGroupSession=UserGroupSession(self.request)
         group = userGroupSession.get_group_session()
         context['permissions'] = GroupPermission.get_permission_dict_of_group(self.request.user,group)
+        
+        # Agregar grupo al contexto
+        if group:
+            context["group"] = group
+            context["role_name"] = group.name
+            
         return context
 
 
@@ -65,6 +77,12 @@ class UpdateViewMixin(object):
         userGroupSession=UserGroupSession(self.request)
         group = userGroupSession.get_group_session()
         context['permissions'] = GroupPermission.get_permission_dict_of_group(self.request.user,group)
+        
+        # Agregar grupo al contexto
+        if group:
+            context["group"] = group
+            context["role_name"] = group.name
+            
         return context
 
      
@@ -77,6 +95,12 @@ class DeleteViewMixin(object):
         userGroupSession=UserGroupSession(self.request)
         group = userGroupSession.get_group_session()
         context['permissions'] = GroupPermission.get_permission_dict_of_group(self.request.user,group)
+        
+        # Agregar grupo al contexto
+        if group:
+            context["group"] = group
+            context["role_name"] = group.name
+            
         return context
 
       
@@ -127,3 +151,22 @@ class PermissionMixin(object):
             return self.permission_required, 
 
         return tuple(self.permission_required)
+
+
+class GroupContextMixin(object):
+    """Mixin para agregar el grupo actual al contexto de todas las vistas"""
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Obtener grupo activo de la sesión
+        group_id = self.request.session.get("group_id")
+        if group_id:
+            current_group = self.request.user.groups.filter(id=group_id).first()
+            if current_group:
+                context["group"] = current_group
+                context["role_name"] = current_group.name
+        
+        # Llenar menús usando el componente existente
+        MenuModule(self.request).fill(context)
+        
+        return context
